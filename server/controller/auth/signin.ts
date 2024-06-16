@@ -1,12 +1,12 @@
 import { Request, Response } from "express"
-import pool from "../../db"
 import bcrypt from "bcrypt"
 import createAuthToken from "../../lib/auth/create-auth-token"
 
 const signin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body
-    const existingUser = await pool.query(
+    const { postgres } = req.context
+    const existingUser = await postgres.query(
       "SELECT * FROM users WHERE email =$1",
       [email]
     )

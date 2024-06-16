@@ -1,12 +1,12 @@
 import { Request, Response } from "express"
-import pool from "../../db"
 import bcrypt from "bcrypt"
 import createAuthToken from "../../lib/auth/create-auth-token"
 
 const signup = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body
-    const existingUser = await pool.query(
+    const { postgres } = req.context
+    const existingUser = await postgres.query(
       "SELECT * FROM users WHERE email =$1",
       [email]
     )
@@ -15,7 +15,7 @@ const signup = async (req: Request, res: Response) => {
       return
     }
     const hashedPassword = await bcrypt.hash(password, 10)
-    const user = await pool.query(
+    const user = await postgres.query(
       "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email",
       [username, email, hashedPassword]
     )
