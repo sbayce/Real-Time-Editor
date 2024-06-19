@@ -22,7 +22,7 @@ const viewEditor = async (req: Request, res: Response) => {
         .json({ message: "User is neither an owner nor a collaborator" })
       return
     }
-    res.status(201).json(editor)
+    res.status(201).json({ ...editor, userId: userId })
   } catch (error) {
     res.status(500).json(error)
   }
