@@ -4,14 +4,28 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import axios from "axios"
+import updateContent from "@/app/lib/editor/update-content"
+// import socket from "@/app/lib/socket"
 
 var socket: Socket = io("http://localhost:4000")
 
+type Editor = {
+  id: string
+  title: string
+  content: string
+  created_at: string
+  updated_at: string
+  userId: string
+}
+
 const page = () => {
-  const [editorData, setEditorData] = useState<any>(null)
+  const [editorData, setEditorData] = useState<Editor | null>(null)
   const [text, setText] = useState("")
+  const [title, setTitle] = useState(editorData?.title)
+  const [isEditableTitle, setIsEditableTitle] = useState(false)
+  //   const [socket, setSocket] = useState<Socket | null>(null)
   const joinRoom = () => {
-    socket.emit("join_room", editorId)
+    socket?.emit("join_room", editorId, editorData?.userId)
   }
   const viewEditor = async () => {
     try {
@@ -24,26 +38,15 @@ const page = () => {
       const data = res.data
       setEditorData(data)
       setText(data.content)
-      joinRoom()
     } catch (error: any) {
       console.log(error.message)
     }
   }
-  const handleChange = async (event: any) => {
+  const handleContentChange = async (event: any) => {
     try {
       const textValue = event.target.value
       setText(textValue)
-      await axios
-        .post(
-          `http://localhost:4000/editor/update-editor/${editorId}`,
-          {
-            content: textValue,
-          },
-          { withCredentials: true }
-        )
-        .catch((error) => {
-          throw new Error(error)
-        })
+      updateContent(textValue, editorId)
     } catch (err) {
       console.log(err)
     }
@@ -51,6 +54,14 @@ const page = () => {
   useEffect(() => {
     viewEditor()
   }, [])
+
+  useEffect(() => {
+    if (editorData) {
+      joinRoom()
+      setTitle(editorData?.title)
+    }
+  }, [editorData])
+
   useEffect(() => {
     socket?.on("recieve_message", (data) => {
       console.log("recieved message from controller: " + data)
@@ -59,7 +70,7 @@ const page = () => {
 
     return () => {
       console.log("socket closing.")
-      socket.off()
+      socket?.off()
     }
   }, [socket])
   const editorId = usePathname().split("/")[2]
@@ -67,11 +78,35 @@ const page = () => {
     <div>
       {editorData ? (
         <div className="flex flex-col gap-4 items-center justify-center p-4">
-          <h1>{editorData.title}</h1>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              setIsEditableTitle(false)
+            }}
+            className="self-start flex justify-between"
+          >
+            <input
+              value={title}
+              disabled={!isEditableTitle}
+              className="bg-transparent border-none hover:bg-none text-xl"
+              onChange={(e) => {
+                setTitle(e.target.value)
+              }}
+            />
+            <button
+              type="button"
+              className="hover:bg-gray-400 hover:rounded-lg"
+              onClick={() => {
+                setIsEditableTitle(!isEditableTitle)
+              }}
+            >
+              edit
+            </button>
+          </form>
           <textarea
             className="border rounded-lg p-2 w-full"
             placeholder="Enter text"
-            onChange={handleChange}
+            onChange={handleContentChange}
             value={text}
           />
         </div>
