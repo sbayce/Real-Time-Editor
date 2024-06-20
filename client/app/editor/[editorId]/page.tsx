@@ -7,7 +7,7 @@ import axios from "axios"
 import updateContent from "@/app/lib/editor/update-content"
 // import socket from "@/app/lib/socket"
 
-var socket: Socket = io("http://localhost:4000")
+// var socket: Socket = io("http://localhost:4000")
 
 type Editor = {
   id: string
@@ -23,8 +23,9 @@ const page = () => {
   const [text, setText] = useState("")
   const [title, setTitle] = useState(editorData?.title)
   const [isEditableTitle, setIsEditableTitle] = useState(false)
-  //   const [socket, setSocket] = useState<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
   const joinRoom = () => {
+    console.log("socket is: " + socket)
     socket?.emit("join_room", editorId, editorData?.userId)
   }
   const viewEditor = async () => {
@@ -56,11 +57,17 @@ const page = () => {
   }, [])
 
   useEffect(() => {
-    if (editorData) {
-      joinRoom()
+    console.log("editor data is: " + editorData)
+    if (editorData && !socket) {
+      console.log("editor data is rdy, new socker=t.")
+      const socket: Socket = io("http://localhost:4000")
+      setSocket(socket)
       setTitle(editorData?.title)
     }
-  }, [editorData])
+    if (editorData && socket) {
+      joinRoom()
+    }
+  }, [editorData, socket])
 
   useEffect(() => {
     socket?.on("recieve_message", (data) => {
@@ -68,10 +75,10 @@ const page = () => {
       setText(data)
     })
 
-    return () => {
-      console.log("socket closing.")
-      socket?.off()
-    }
+    // return () => {
+    //   console.log("socket closing.")
+    //   socket?.off()
+    // }
   }, [socket])
   const editorId = usePathname().split("/")[2]
   return (
