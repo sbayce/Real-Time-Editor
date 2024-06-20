@@ -22,7 +22,11 @@ const viewEditor = async (req: Request, res: Response) => {
         .json({ message: "User is neither an owner nor a collaborator" })
       return
     }
-    res.status(201).json({ ...editor, userId: userId })
+    const user = await postgres.query("SELECT email FROM users WHERE id = $1", [
+      userId,
+    ])
+    const userEmail = user.rows[0].email
+    res.status(201).json({ ...editor, userEmail: userEmail })
   } catch (error) {
     res.status(500).json(error)
   }
