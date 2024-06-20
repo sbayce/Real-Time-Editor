@@ -29,10 +29,11 @@ const socketMap = new Map<string, string>()
 io.on("connection", (socket) => {
   // console.log("auth: " + JSON.stringify(socket.handshake.auth.userId))
   // const userId = socket.handshake.auth.userId
+  console.log("new socket: " + socket.id)
   var roomNum: string
   const socketId = socket.id
   socket.on("join_room", (roomId, userId) => {
-    console.log("joined room: " + roomId)
+    console.log("socket: " + socketId + " joined room: " + roomId)
     roomNum = roomId
     socketMap.set(socketId, userId)
     roomMap.set(roomId, socketMap)
