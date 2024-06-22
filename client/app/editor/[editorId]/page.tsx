@@ -122,24 +122,42 @@ const page = () => {
     })
     setQuill(q)
   }, [])
-  const ql = document.querySelector(".ql-editor")
-  ql?.addEventListener("mouseup", () => {
-    let selection = window.getSelection()
-    console.log(selection)
-    if (selection && selection.rangeCount > 0) {
-      let range = selection.getRangeAt(0)
-      console.log("range: " + selection.toString())
-      let selectedText = range.toString()
-      console.log(selectedText)
-    }
-    // let parentElement = selection?.anchorNode?.parentElement
-    // parentElement?.addEventListener("mouseup", () => {
-    //   console.log(parentElement)
-    // })
-    // console.log(parentElement.select)
-  })
+  //   const ql = document.querySelector(".ql-editor")
+  //   ql?.addEventListener("mouseup", () => {
+  //     let selection = window.getSelection()
+  //     const startIndex = selection?.anchorOffset
+  //     const endIndex = selection?.focusOffset
+  //     var htmlElement = selection?.anchorNode?.parentElement?.innerHTML
+  //     if (startIndex && endIndex) {
+  //       htmlElement =
+  //         htmlElement?.substring(0, startIndex) +
+  //         "<span className='bg-yellow-400'>" +
+  //         htmlElement?.substring(startIndex, endIndex) +
+  //         "</span>" +
+  //         htmlElement?.substring(endIndex, htmlElement.length)
+  //       if (
+  //         selection &&
+  //         selection.anchorNode &&
+  //         selection.anchorNode.parentElement
+  //       ) {
+  //         selection.anchorNode.parentElement.innerHTML = htmlElement
+  //       }
+  //     }
+  //     console.log(selection)
+  //     if (selection && selection.rangeCount > 0) {
+  //       let range = selection.getRangeAt(0)
+  //       //   console.log("range: " + selection.toString())
+  //       let selectedText = range.toString()
+  //       console.log(selectedText)
+  //     }
+  //     // let parentElement = selection?.anchorNode?.parentElement
+  //     // parentElement?.addEventListener("mouseup", () => {
+  //     //   console.log(parentElement)
+  //     // })
+  //     // console.log(parentElement.select)
+  //   })
 
-  console.log(ql)
+  //   console.log(ql)
   const editorId = usePathname().split("/")[2]
   return (
     <div>
