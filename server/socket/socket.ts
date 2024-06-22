@@ -1,6 +1,7 @@
 import http from "http"
 import { Server } from "socket.io"
 import express from "express"
+import pool from "../db"
 
 const app = express()
 const server = http.createServer(app)
@@ -47,6 +48,22 @@ io.on("connection", (socket) => {
     const userEmails = Array.from(userMap.values())
     io.to(roomId).emit("online_users", userEmails)
   }
+
+  socket.on("send-changes", async ({ delta, content }) => {
+    await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+      content,
+      roomId,
+    ])
+    socket.broadcast.to(roomId).emit("recieve-changes", delta)
+  })
+
+  socket.on("send_title", async (title) => {
+    await pool.query("UPDATE editor SET title = $1 WHERE id = $2", [
+      title,
+      roomId,
+    ])
+    socket.broadcast.to(roomId).emit("recieve_title", title)
+  })
 
   socket.on("disconnect", () => {
     console.log("socket id: " + socketId + " disconnected.")
