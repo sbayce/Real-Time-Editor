@@ -20,6 +20,9 @@ body {
   /* background-color: black;
   color: white; */
 }
+.highlight {
+  background-color: yellow;
+}
 
 @layer utilities {
   .text-balance {
