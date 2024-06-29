@@ -19,8 +19,8 @@ const createEditor = async (req: Request, res: Response) => {
       [newWorkspaceEntry, userId]
     )
     res.status(201).json({ message: "Editor created" })
-  } catch (error) {
-    res.status(500).json(error)
+  } catch (error: any) {
+    res.status(500).json(error.message)
   }
 }
 export default createEditor
