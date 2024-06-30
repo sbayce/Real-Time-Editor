@@ -18,15 +18,21 @@ type Editor = {
   userEmail: string
 }
 
+type OnlineUser = {
+  socketId: string,
+  email: string,
+  color: string
+}
+
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
   const [title, setTitle] = useState(editorData?.title)
   const [isEditableTitle, setIsEditableTitle] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
-  const [onlineUsers, setOnlineUsers] = useState([])
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [quill, setQuill] = useState<Quill | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-
+console.log(onlineUsers)
   const viewEditor = async () => {
     try {
       const res = await axios.get(
@@ -72,6 +78,7 @@ const page = () => {
     if (!socket || !quill) return
 
     socket.on("recieve-changes", (delta) => {
+      console.log("delta: " , delta.ops)
       quill.updateContents(delta)
     })
 
@@ -128,18 +135,26 @@ const page = () => {
   ql?.addEventListener("mouseup", () => {
     const selection = window.getSelection()
     if (selection && selection.rangeCount > 0) {
-      // console.log(selection)
+      // find user color from socket
+      const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket?.id)
+      const userColor = user?.color
       const range = selection.getRangeAt(0)
-      if (range && !range.collapsed) {
+      if (range && !range.collapsed && userColor) {
         prevText = range.toString()
         prevSelection = selection
         const span = document.createElement("span")
-        span.style.backgroundColor = "rgba(128, 0, 128, 0.5)"
+        span.style.backgroundColor = userColor
         span.textContent = range.toString()
 
         range.deleteContents()
         range.insertNode(span)
         prevSelection = range
+
+        // Reselect the new range
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNode(span);
+        selection.addRange(newRange);
         // console.log(range)
         // Deselect text after highlighting
         // selection.removeAllRanges()
@@ -190,13 +205,15 @@ const page = () => {
             </form>
             <div className="flex flex-col gap-2">
               {onlineUsers &&
-                onlineUsers.map((email: string) => {
+                onlineUsers.map((user: any) => {
                   return (
-                    <div className="flex items-center gap-2">
-                      <Chip variant="dot" color="success">
-                        {email}
+                    
+                      <Chip variant="bordered">
+                        <div className="flex items-center gap-2">
+                          <div className="rounded-full w-2 p-2" style={{backgroundColor: user.color}}></div>
+                        {user.email}
+                        </div>
                       </Chip>
-                    </div>
                   )
                 })}
             </div>
