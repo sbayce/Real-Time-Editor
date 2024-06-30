@@ -12,10 +12,15 @@ const io = new Server(server, {
   },
 })
 
-const roomMap = new Map<string, Map<string, string>>()
-const socketMap = new Map<string, string>()
+type SocketData ={
+  email: string,
+  color: string
+}
 
-function logRoomMap(roomMap: Map<string, Map<string, string>>): void {
+const roomMap = new Map<string, Map<string, SocketData>>()
+const socketMap = new Map<string, SocketData>()
+
+function logRoomMap(roomMap: Map<string, Map<string, SocketData>>): void {
   roomMap.forEach((innerMap, room) => {
     console.log(`Room: ${room}`)
     innerMap.forEach((user, socket) => {
@@ -31,11 +36,11 @@ io.on("connection", (socket) => {
   const socketId = socket.id
   let currentRoomMap = roomMap.get(roomId)
   if (!currentRoomMap) {
-    var newRoomMap = new Map<string, string>()
-    newRoomMap.set(socketId, userEmail)
+    var newRoomMap = new Map<string, SocketData>()
+    newRoomMap.set(socketId, {email: userEmail, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
     roomMap.set(roomId, newRoomMap)
   } else {
-    currentRoomMap?.set(socketId, userEmail)
+    currentRoomMap?.set(socketId, {email: userEmail, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
     roomMap.set(roomId, currentRoomMap)
   }
   // socketMap.set(socketId, userEmail)
@@ -43,10 +48,22 @@ io.on("connection", (socket) => {
   socket.join(roomId)
   console.log("socket: " + socketId + " joined room: " + roomId)
   logRoomMap(roomMap)
+
+  // get online users from a specific room
   const userMap = roomMap.get(roomId)
   if (userMap) {
-    const userEmails = Array.from(userMap.values())
-    io.to(roomId).emit("online_users", userEmails)
+    const data = Array.from(userMap.entries())
+    console.log("data: ", data)
+    let onlineUsers: any = []
+    Array.from(userMap.entries()).forEach(([key, value]) => {
+      onlineUsers.push({
+        socketId: key,
+        email: value.email,
+        color: value.color
+      })
+    })
+    console.log("online users: ", onlineUsers)
+    io.to(roomId).emit("online_users", onlineUsers)
   }
 
   socket.on("send-changes", async ({ delta, content }) => {
