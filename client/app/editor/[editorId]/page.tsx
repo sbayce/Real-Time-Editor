@@ -23,15 +23,20 @@ type OnlineUser = {
   email: string,
   color: string
 }
+let prevSelection: any
+let prevText: any
+let prevInnerText: any
+let prevInnerHTML: any
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
   const [title, setTitle] = useState(editorData?.title)
   const [isEditableTitle, setIsEditableTitle] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
   const [quill, setQuill] = useState<Quill | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  
 console.log(onlineUsers)
   const viewEditor = async () => {
     try {
@@ -79,8 +84,17 @@ console.log(onlineUsers)
 
     socket.on("recieve-changes", (delta) => {
       console.log("delta: " , delta.ops)
+      // console.log("current HTML: ", prevInnerHTML)
+      // console.log("current text: ", prevInnerText)
       quill.updateContents(delta)
     })
+
+    // socket.on("recieve-selection-change", (updatedSelection) => {
+    //   if(prevInnerText === updatedSelection.prevInnerText){
+    //     console.log("updated this client's HTML: " , updatedSelection.prevInnerHTML)
+    //     prevInnerHTML = updatedSelection.prevInnerHTML
+    //   }
+    // })
 
     socket.on("recieve_title", (title) => {
       setTitle(title)
@@ -90,6 +104,10 @@ console.log(onlineUsers)
       if (source !== "user") return
       const content = quill.getContents()
       socket.emit("send-changes", { delta: delta, content: content })
+      // console.log("current HTML: ", prevInnerHTML)
+      // console.log("current text: ", prevInnerText)
+      // console.log("prev HTML: ", prevInnerHTML)
+      // socket.emit("update-selection-change", {prevInnerHTML, prevInnerText})
     })
 
     return () => {
@@ -101,7 +119,7 @@ console.log(onlineUsers)
     if (!socket) return
 
     socket?.on("online_users", (data) => {
-      console.log("online users are: " + data)
+      console.log("online users are: " , data)
       setOnlineUsers(data)
     })
 
@@ -117,6 +135,58 @@ console.log(onlineUsers)
       inputRef.current.focus()
     }
   }, [isEditableTitle])
+  console.log(socket)
+
+  const handleMouseUp = () => {
+    const selection = window.getSelection()
+    if(!quill || !socket || !onlineUsers || !selection || (selection.rangeCount === 0)) return
+    const range = selection.getRangeAt(0)
+    if(range.collapsed) return
+    const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket?.id)
+    if(!user) return
+    const userColor = user.color
+    const text = range.toString()
+    console.log(text)
+    const span = document.createElement("span")
+    span.id = String(socket.id)
+    span.style.backgroundColor = userColor
+    span.textContent = text
+    range.deleteContents()
+    range.insertNode(span)
+  }
+
+  const handleMouseDown = () => {
+    try{
+      const ql = document.querySelector(".ql-editor")
+      if (!quill || !socket || !onlineUsers) return
+        const textToBeUnselected = ql?.querySelector(`#${socket.id}`)
+        console.log(textToBeUnselected)
+        if(textToBeUnselected){
+          console.log("alo")
+          let pa = textToBeUnselected?.parentNode
+          while(textToBeUnselected?.firstChild) pa?.insertBefore(textToBeUnselected.firstChild, textToBeUnselected)
+        }
+    }catch(e){
+      console.log(e)
+    }
+  }
+
+  useEffect(() => {
+    const ql = document.querySelector(".ql-editor")
+
+    if(ql){
+      ql.addEventListener("mouseup", handleMouseUp)
+      ql.addEventListener("mousedown", handleMouseDown)
+
+      return () => {
+        ql.removeEventListener("mouseup", handleMouseUp)
+        ql.removeEventListener("mousedown", handleMouseDown)
+      }
+    }
+
+  }, [quill, socket, onlineUsers])
+
+  console.log("socket: ", socket)
 
   const wrapperRef = useCallback((wrapper: any) => {
     if (wrapper === null) return
@@ -129,51 +199,77 @@ console.log(onlineUsers)
     })
     setQuill(q)
   }, [])
-  const ql = document.querySelector(".ql-editor")
-  let prevSelection: any
-  let prevText: any
-  ql?.addEventListener("mouseup", () => {
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      // find user color from socket
-      const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket?.id)
-      const userColor = user?.color
-      const range = selection.getRangeAt(0)
-      if (range && !range.collapsed && userColor) {
-        prevText = range.toString()
-        prevSelection = selection
-        const span = document.createElement("span")
-        span.style.backgroundColor = userColor
-        span.textContent = range.toString()
 
-        range.deleteContents()
-        range.insertNode(span)
-        prevSelection = range
+  // const ql = document.querySelector(".ql-editor")
+  // console.log(ql)
+  // ql?.addEventListener("mouseup", (e) => {
+  //   if(!quill) return
+  // const selection = quill?.getSelection()
+  // if(!selection) return
+  // console.log("selection: ", selection?.index)
+  // const index = selection.index
+  // const length = selection.length
+  // quill?.deleteText(index,length)
+  // quill.insertText(index, "h")
+  //   const selection = window.getSelection()
+  //   if (selection && selection.rangeCount > 0) {
+  //     // find user color from socket
+  //     const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket?.id)
+  //     console.log(user)
+  //     const userColor = user?.color
+  //     console.log("color: ", userColor)
+  //     const range = selection.getRangeAt(0)
+  //     if (range && !range.collapsed && userColor && socket) {
+  //       prevText = range.toString()
+  //       prevSelection = selection
+  //       const span = document.createElement("span")
+  //       span.id = String(socket.id)
+  //       span.style.backgroundColor = userColor
+  //       span.textContent = range.toString()
 
-        // Reselect the new range
-        selection.removeAllRanges();
-        const newRange = document.createRange();
-        newRange.selectNode(span);
-        selection.addRange(newRange);
-        // console.log(range)
-        // Deselect text after highlighting
-        // selection.removeAllRanges()
-      }
-    }
-  })
-  ql?.addEventListener("mousedown", () => {
-    const selection = window.getSelection()
-    // console.log(selection)
-    if (prevSelection && prevText) {
-      console.log(prevSelection.commonAncestorContainer.innerHTML)
-      console.log(prevSelection.commonAncestorContainer.innerText)
-      prevSelection.commonAncestorContainer.innerHTML =
-        prevSelection.commonAncestorContainer.innerText
-      // console.log("prev text: " + prevText)
-      // prevSelection.deleteContents()
-      // prevSelection.insertNode(prevText)
-    }
-  })
+        // range.deleteContents()
+        // range.insertNode(span)
+  //       prevSelection = range
+  //       prevInnerHTML = prevSelection.commonAncestorContainer.innerHTML
+  //       prevInnerText = prevSelection.commonAncestorContainer.innerText
+
+  //       // Reselect the new range
+  //       selection.removeAllRanges();
+  //       const newRange = document.createRange();
+  //       newRange.selectNode(span);
+  //       selection.addRange(newRange);
+  //       // console.log(range)
+  //       // Deselect text after highlighting
+  //       // selection.removeAllRanges()
+  //     }
+  //   }
+  // })
+  // ql?.addEventListener("mousedown", () => {
+  //   try{
+  //     if (ql && socket) {
+  //       const textToBeUnselected = ql?.querySelector(`#${socket?.id}`)
+  //       if(textToBeUnselected){
+  //         console.log("alo")
+  //         let pa = textToBeUnselected?.parentNode
+  //         while(textToBeUnselected?.firstChild) pa?.insertBefore(textToBeUnselected.firstChild, textToBeUnselected)
+  //       }
+        
+  //       // console.log(prevSelection.commonAncestorContainer.innerHTML)
+  //       // console.log(prevSelection.commonAncestorContainer.innerText)
+  //       // console.log(prevInnerHTML)
+  //       // console.log(prevInnerText)
+  //       // prevSelection.commonAncestorContainer.innerHTML =
+  //       //   prevSelection.commonAncestorContainer.innerText
+  //       // prevInnerHTML = prevInnerText
+  //       // console.log("prev text: " + prevText)
+  //       // prevSelection.deleteContents()
+  //       // prevSelection.insertNode(prevText)
+  //     }
+  //   }catch(e){
+  //     console.log(e)
+  //   }
+    
+  // })
   const editorId = usePathname().split("/")[2]
   return (
     <div>

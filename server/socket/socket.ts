@@ -74,6 +74,10 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("recieve-changes", delta)
   })
 
+  socket.on("update-selection-change", ({prevInnerHTML, prevInnerText}) => {
+    socket.broadcast.to(roomId).emit("recieve-selection-change", {prevInnerHTML, prevInnerText})
+  })
+
   socket.on("send_title", async (title) => {
     await pool.query("UPDATE editor SET title = $1 WHERE id = $2", [
       title,
