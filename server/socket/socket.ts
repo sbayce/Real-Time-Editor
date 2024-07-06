@@ -95,13 +95,19 @@ io.on("connection", (socket) => {
     if (currentRoomMap) {
       currentRoomMap.delete(socketId)
       if (currentRoomMap.size === 0) {
-        const updatedDocument = await redisClient.json.get(`editor:${roomId}`, {
+        let updatedContent: any = await redisClient.json.get(`editor:${roomId}`, {
           path: "$.content"
         })
-        await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
-          updatedDocument,
-          roomId,
-        ])
+        if(updatedContent){ // check incase cache expires
+          // Convert content to JSON string because postgres accepts JSON strings
+          updatedContent = updatedContent[0] //remove unnecessary wrapper array
+          console.log("alo: ", updatedContent)
+          const jsonContent = JSON.stringify(updatedContent);
+          await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+            jsonContent,
+            roomId,
+          ])
+        }
         // delete room if its empty
         roomMap.delete(roomId)
       } else {
