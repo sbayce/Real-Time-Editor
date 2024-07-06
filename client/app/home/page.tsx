@@ -18,11 +18,13 @@ const Home = async () => {
       console.log(err)
     }
   }
-  const workspace = await getWorkspace()
+  let {owned, collaborated} = await getWorkspace()
+  owned = owned.length === 0? null : owned
+  collaborated = collaborated.length === 0? null : collaborated
   return (
     <div className="py-8 px-60">
-      <h1 className="text-lg font-medium mb-2">Your documents</h1>
-      <Workspace workspace={workspace} />
+      {/* <h1 className="text-lg font-medium mb-2">Your documents</h1> */}
+      <Workspace owned={owned} collaborated={collaborated} />
     </div>
   )
 }
