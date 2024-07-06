@@ -8,6 +8,7 @@ import { Chip } from "@nextui-org/react"
 import Quill from "quill"
 import "quill/dist/quill.snow.css"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
+import InviteModal from "@/app/components/editor/InviteModal"
 
 type Editor = {
   id: string
@@ -76,7 +77,7 @@ console.log(onlineUsers)
     setSocket(socket)
     setTitle(editorData?.title)
     console.log(editorData)
-    quill.setContents(JSON.parse(editorData.content))
+    quill.setContents(editorData.content)
     quill.enable()
   }, [editorData, quill])
 
@@ -276,7 +277,7 @@ console.log(onlineUsers)
   return (
     <div>
       {editorData ? (
-        <>
+        <div className=" px-72">
           <div className="flex justify-between">
             <form
               onSubmit={onTitleSubmit}
@@ -301,12 +302,16 @@ console.log(onlineUsers)
                 edit
               </button>
             </form>
+            <InviteModal />
+          </div>
+          <div className="flex gap-10 justify-center">
+            <div ref={wrapperRef} className="w-full"></div>
             <div className="flex flex-col gap-2">
+              <h1>Online Collaborators</h1>
               {onlineUsers &&
                 onlineUsers.map((user: any) => {
                   return (
-                    
-                      <Chip variant="bordered">
+                      <Chip className="border bg-transparent border-gray-300 rounded-md">
                         <div className="flex items-center gap-2">
                           <div className="rounded-full w-2 p-2" style={{backgroundColor: user.color}}></div>
                         {user.email}
@@ -316,10 +321,7 @@ console.log(onlineUsers)
                 })}
             </div>
           </div>
-          <div className="flex flex-col gap-4 items-center justify-center p-4">
-            <div ref={wrapperRef}></div>
-          </div>
-        </>
+        </div>
       ) : (
         <p>Cannot view</p>
       )}
