@@ -9,16 +9,25 @@ const getWorkspace = async (req: Request, res: Response) => {
       [userId]
     )
     const workspace = workspaceResult.rows[0].workspace
-
     // Extract editor_ids
-    let editors = workspace.map((item: any) => item.editor_id)
+    let ownedEditorsIds = workspace.map((item: any) => {
+      if(item.role === "owner") return item.editor_id
+    })
+    let collaboratedEditorIds = workspace.map((item: any) => {
+      if(item.role === "collaborator") return item.editor_id
+    })
     // Query the editor table for these editor_ids
-    const editorResult = await postgres.query(
-      "SELECT * FROM editor WHERE id = ANY($1::int[])",
-      [editors]
+    const ownedEditors = await postgres.query(
+      "SELECT id, title, created_at, updated_at FROM editor WHERE id = ANY($1::int[])",
+      [ownedEditorsIds]
     )
-    res.status(200).json(editorResult.rows)
+    const collaboratedEditors = await postgres.query(
+      "SELECT id, title, created_at, updated_at FROM editor WHERE id = ANY($1::int[])",
+      [collaboratedEditorIds]
+    )
+    res.status(200).json({owned: ownedEditors.rows, collaborated: collaboratedEditors.rows})
   } catch (error) {
+    console.log(error)
     res.status(500).json(error)
   }
 }
