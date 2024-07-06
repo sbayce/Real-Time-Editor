@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
 import checkAccessPermission from "../../lib/editor/check-access-permission"
 import redisClient from "../../redis"
-import { json } from "body-parser"
 
 const viewEditor = async (req: Request, res: Response) => {
   try {
@@ -23,6 +22,14 @@ const viewEditor = async (req: Request, res: Response) => {
       }
       editor = editorExists.rows[0]
       console.log(editor)
+      const hasAccessPermission = checkAccessPermission(editor, userId)
+      if (!hasAccessPermission) {
+        // redisClient.json.arrAppend(`user:${userId}`, "$", {[editorId]: false})
+        res
+          .status(403)
+          .json({ message: "User is neither an owner nor a collaborator" })
+        return
+    }
       redisClient.json.set(`editor:${editorId}`, "$", editor)
       redisClient.expire(`editor:${editorId}`, 300)
     }else{
@@ -33,14 +40,6 @@ const viewEditor = async (req: Request, res: Response) => {
       restData = rest
     }
   
-    const hasAccessPermission = checkAccessPermission(editor, userId)
-    if (!hasAccessPermission) {
-      // redisClient.json.arrAppend(`user:${userId}`, "$", {[editorId]: false})
-      res
-        .status(403)
-        .json({ message: "User is neither an owner nor a collaborator" })
-      return
-    }
     const user = await postgres.query("SELECT email FROM users WHERE id = $1", [
       userId,
     ])
@@ -51,7 +50,7 @@ const viewEditor = async (req: Request, res: Response) => {
     */
     
     if(editorContent){
-      let content = JSON.stringify(editorContent)
+      let content = editorContent
       console.log("ok: ", content)
       res.status(201).json({ content, ...restData, userEmail: userEmail })
       return
