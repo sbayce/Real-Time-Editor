@@ -32,13 +32,22 @@ const inviteCollaborator = async (req: Request, res: Response) => {
       [editorId, collaboratorEntry]
     )
     if (alreadyCollaborator.rowCount === 1) {
-      console.log("already exists")
       res.status(400).json("User is already a collaborator.")
       return
     }
     await postgres.query(
       "UPDATE editor SET collaborators = collaborators || $1::jsonb WHERE id = $2",
       [collaboratorEntry, editorId]
+    )
+    
+    // Prepare the new JSON object to append
+    const newWorkspaceEntry = JSON.stringify([
+      { editor_id: editorId, role: "collaborator" },
+    ])
+    // Update the user's workspace
+    await postgres.query(
+      "UPDATE users SET workspace = workspace || $1::jsonb WHERE id = $2",
+      [newWorkspaceEntry, collaborator.id]
     )
 
     res.status(200).json("User invited.")
