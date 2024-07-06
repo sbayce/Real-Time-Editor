@@ -2,6 +2,7 @@ import http from "http"
 import { Server } from "socket.io"
 import express from "express"
 import pool from "../db"
+import redisClient from "../redis"
 
 const app = express()
 const server = http.createServer(app)
@@ -67,10 +68,11 @@ io.on("connection", (socket) => {
   }
 
   socket.on("send-changes", async ({ delta, content }) => {
-    await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
-      content,
-      roomId,
-    ])
+    // await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+    //   content,
+    //   roomId,
+    // ])
+    redisClient.json.set(`editor:${roomId}`, "$.content", content)
     socket.broadcast.to(roomId).emit("recieve-changes", delta)
   })
 
@@ -86,13 +88,20 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("recieve_title", title)
   })
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async() => {
     console.log("socket id: " + socketId + " disconnected.")
     console.log(roomId)
     var currentRoomMap = roomMap.get(roomId)
     if (currentRoomMap) {
       currentRoomMap.delete(socketId)
       if (currentRoomMap.size === 0) {
+        const updatedDocument = await redisClient.json.get(`editor:${roomId}`, {
+          path: "$.content"
+        })
+        await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+          updatedDocument,
+          roomId,
+        ])
         // delete room if its empty
         roomMap.delete(roomId)
       } else {
