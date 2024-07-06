@@ -75,6 +75,7 @@ console.log(onlineUsers)
     })
     setSocket(socket)
     setTitle(editorData?.title)
+    console.log(editorData)
     quill.setContents(JSON.parse(editorData.content))
     quill.enable()
   }, [editorData, quill])
@@ -142,11 +143,12 @@ console.log(onlineUsers)
     if(!quill || !socket || !onlineUsers || !selection || (selection.rangeCount === 0)) return
     const range = selection.getRangeAt(0)
     if(range.collapsed) return
-    const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket?.id)
+    const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket.id)
     if(!user) return
     const userColor = user.color
     const text = range.toString()
     console.log(text)
+    console.log(selection)
     const span = document.createElement("span")
     span.id = String(socket.id)
     span.style.backgroundColor = userColor
