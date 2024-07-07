@@ -34,8 +34,16 @@ const viewEditor = async (req: Request, res: Response) => {
       redisClient.expire(`editor:${editorId}`, 300)
     }else{
       editor = cachedEditor
-      console.log("from cache")
+      const hasAccessPermission = checkAccessPermission(editor, userId)
+      if (!hasAccessPermission) {
+        // redisClient.json.arrAppend(`user:${userId}`, "$", {[editorId]: false})
+        res
+          .status(403)
+          .json({ message: "User is neither an owner nor a collaborator" })
+        return
+    }
       const {content, ...rest} = cachedEditor
+      console.log("cached: ", cachedEditor)
       editorContent = content
       restData = rest
     }
@@ -50,13 +58,11 @@ const viewEditor = async (req: Request, res: Response) => {
        The frontend accepts content as STRING
     */
     
-    if(editorContent){
-      let content = editorContent
-      console.log("ok: ", content)
-      res.status(201).json({ content, ...restData, userEmail: userEmail, username: username })
+    if(editorContent !== undefined){
+      res.status(201).json({ content: editorContent, ...restData, userEmail: userEmail, username: username })
       return
     }
-    res.status(201).json({ ...editor, userEmail: userEmail })
+    res.status(201).json({ ...editor, userEmail: userEmail, username: username })
   } catch (error) {
     console.log(error)
     res.status(500).json(error)
