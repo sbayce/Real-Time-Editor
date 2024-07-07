@@ -40,10 +40,11 @@ const viewEditor = async (req: Request, res: Response) => {
       restData = rest
     }
   
-    const user = await postgres.query("SELECT email FROM users WHERE id = $1", [
+    const user = await postgres.query("SELECT email, username FROM users WHERE id = $1", [
       userId,
     ])
     const userEmail = user.rows[0].email
+    const username = user.rows[0].username
     /* content is stored as JSON in redis and as STRING in posgres
        So pass the content as STRING if it's coming from redis
        The frontend accepts content as STRING
@@ -52,7 +53,7 @@ const viewEditor = async (req: Request, res: Response) => {
     if(editorContent){
       let content = editorContent
       console.log("ok: ", content)
-      res.status(201).json({ content, ...restData, userEmail: userEmail })
+      res.status(201).json({ content, ...restData, userEmail: userEmail, username: username })
       return
     }
     res.status(201).json({ ...editor, userEmail: userEmail })

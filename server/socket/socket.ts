@@ -15,6 +15,7 @@ const io = new Server(server, {
 
 type SocketData ={
   email: string,
+  username: string,
   color: string
 }
 
@@ -34,14 +35,15 @@ io.on("connection", (socket) => {
   console.log("new socket: " + socket.id)
   const roomId = socket.handshake.auth.roomId
   const userEmail = socket.handshake.auth.userEmail
+  const username = socket.handshake.auth.username
   const socketId = socket.id
   let currentRoomMap = roomMap.get(roomId)
   if (!currentRoomMap) {
     var newRoomMap = new Map<string, SocketData>()
-    newRoomMap.set(socketId, {email: userEmail, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
+    newRoomMap.set(socketId, {email: userEmail, username: username, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
     roomMap.set(roomId, newRoomMap)
   } else {
-    currentRoomMap?.set(socketId, {email: userEmail, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
+    currentRoomMap?.set(socketId, {email: userEmail, username: username, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
     roomMap.set(roomId, currentRoomMap)
   }
   // socketMap.set(socketId, userEmail)
@@ -60,6 +62,7 @@ io.on("connection", (socket) => {
       onlineUsers.push({
         socketId: key,
         email: value.email,
+        username: value.username,
         color: value.color
       })
     })
