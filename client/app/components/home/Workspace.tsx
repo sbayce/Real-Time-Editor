@@ -30,7 +30,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     <>
     {ownedData && <div>
       <h1 className="text-lg font-medium mb-2">Your Editors</h1>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
       <button onClick={createEditor}>Create Editor</button>
       {ownedData && ownedData.map((editor: any) => {
         return (
@@ -39,12 +39,12 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
             onClick={() => {
               router.push(`/editor/${editor.id}`)
             }}
-            className="border rounded-md flex flex-col gap-2 cursor-pointer hover:border-gray-400"
+            className="border rounded-md flex flex-col gap-2 cursor-pointer hover:border-gray-400 w-[208px]"
           >
             <Image
               src="./img.jfif"
               radius="none"
-              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[13.5rem]"
+              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem]"
             />
             <div className="px-2">
               <p className="font-medium">{editor.title}</p>
@@ -68,12 +68,12 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
             onClick={() => {
               router.push(`/editor/${editor.id}`)
             }}
-            className="border rounded-md flex flex-col gap-2 cursor-pointer hover:border-gray-400"
+            className="border rounded-md flex flex-col gap-2 cursor-pointer hover:border-gray-400 w-[208px]"
           >
             <Image
               src="./img.jfif"
               radius="none"
-              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[13.5rem]"
+              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem]"
             />
             <div className="px-2">
               <p className="font-medium">{editor.title}</p>
