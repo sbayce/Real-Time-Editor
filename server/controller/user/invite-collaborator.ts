@@ -1,4 +1,5 @@
 import { Request, Response } from "express"
+import redisClient from "../../redis"
 
 const inviteCollaborator = async (req: Request, res: Response) => {
   try {
@@ -23,10 +24,19 @@ const inviteCollaborator = async (req: Request, res: Response) => {
       res.status(400).json("Editor does not exist.")
       return
     }
-    // Prepare the new JSON object to append
+    // Prepare the new JSON object to append to editor
     const collaboratorEntry = JSON.stringify([
       { userId: collaborator.id, permission: "write" },
     ])
+    const currentCollaborators: any = await redisClient.json.get(`editor:${editorId}`, {path: `$.collaborators`})
+    if(currentCollaborators){
+      const exists = currentCollaborators[0].some((entry: any) => JSON.stringify(entry) === JSON.stringify({ userId: collaborator.id, permission: "write" }))
+      if(!exists){
+        await redisClient.json.arrAppend(`editor:${editorId}`, "$.collaborators", { userId: collaborator.id, permission: "write" });
+      }
+    }
+    console.log("current collabs: ", currentCollaborators)
+    // await redisClient.json.arrAppend(`editor:${editorId}`, "$.collaborators", collaboratorEntry)
     const alreadyCollaborator = await postgres.query(
       "SELECT * FROM editor WHERE id = $1 AND collaborators @> $2::jsonb",
       [editorId, collaboratorEntry]
@@ -40,7 +50,7 @@ const inviteCollaborator = async (req: Request, res: Response) => {
       [collaboratorEntry, editorId]
     )
     
-    // Prepare the new JSON object to append
+    // Prepare the new JSON object to append to user's workspace
     const newWorkspaceEntry = JSON.stringify([
       { editor_id: editorId, role: "collaborator" },
     ])
