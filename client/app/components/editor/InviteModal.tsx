@@ -28,7 +28,7 @@ const InviteModal = () => {
   return (
     <>
     <Toaster position="top-center" />
-      <Button onPress={onOpen} variant="bordered" color="primary">Invite</Button>
+      <Button onPress={onOpen} radius="sm" variant="solid" color="primary">Invite</Button>
       <Modal 
         isOpen={isOpen} 
         onOpenChange={onOpenChange}
