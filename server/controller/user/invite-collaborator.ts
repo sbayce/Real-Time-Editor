@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import redisClient from "../../redis"
+import addCollaboratorToRedis from "../../lib/editor/add-collaborator-to-redis"
 
 const inviteCollaborator = async (req: Request, res: Response) => {
   try {
@@ -28,15 +28,9 @@ const inviteCollaborator = async (req: Request, res: Response) => {
     const collaboratorEntry = JSON.stringify([
       { userId: collaborator.id, permission: "write" },
     ])
-    const currentCollaborators: any = await redisClient.json.get(`editor:${editorId}`, {path: `$.collaborators`})
-    if(currentCollaborators){
-      const exists = currentCollaborators[0].some((entry: any) => JSON.stringify(entry) === JSON.stringify({ userId: collaborator.id, permission: "write" }))
-      if(!exists){
-        await redisClient.json.arrAppend(`editor:${editorId}`, "$.collaborators", { userId: collaborator.id, permission: "write" });
-      }
-    }
-    console.log("current collabs: ", currentCollaborators)
-    // await redisClient.json.arrAppend(`editor:${editorId}`, "$.collaborators", collaboratorEntry)
+
+    addCollaboratorToRedis(collaborator, editorId)
+
     const alreadyCollaborator = await postgres.query(
       "SELECT * FROM editor WHERE id = $1 AND collaborators @> $2::jsonb",
       [editorId, collaboratorEntry]
