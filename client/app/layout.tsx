@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { NextUIProvider } from "@nextui-org/react"
 import Header from "./components/header/Header"
+import ReactQueryProvider from "@/utils/providers/ReactQueryProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -19,12 +20,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <ReactQueryProvider>
         <NextUIProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
             <div className="flex-1">{children}</div>
           </div>
         </NextUIProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   )
