@@ -21,8 +21,10 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     return "Created " + date.toLocaleDateString()
   }
   const createEditor = async() => {
-    const res = await axios.post("http://localhost:4000/user/create-editor", {}, {withCredentials: true})
-    setOwnedData([...ownedData, res.data])
+    await axios.post("http://localhost:4000/user/create-editor", {}, {withCredentials: true}).then((res) => {
+      console.log(res.data)
+      setOwnedData([...ownedData, res.data])
+    })
   }
   return (
     <>
@@ -58,6 +60,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
       {collaboratedData && <div>
       <h1>Your Collaboration</h1>
       <div className="grid grid-cols-4 gap-4">
+      <button onClick={createEditor}>Create Editor</button>
       {collaboratedData && collaboratedData.map((editor: any) => {
         return (
           <div
