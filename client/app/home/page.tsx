@@ -22,7 +22,7 @@ const Home = async () => {
   owned = owned.length === 0? null : owned
   collaborated = collaborated.length === 0? null : collaborated
   return (
-    <div className="py-8 px-60">
+    <div className="py-8 px-80">
       {/* <h1 className="text-lg font-medium mb-2">Your documents</h1> */}
       <Workspace owned={owned} collaborated={collaborated} />
     </div>
