@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ReactQueryProvider>
         <NextUIProvider>
-          <div className="flex flex-col min-h-screen dark text-foreground2 bg-background2">
+          <div className="flex flex-col min-h-screen light text-foreground bg-background">
             <Header />
             <div className="flex-1">{children}</div>
           </div>
