@@ -9,7 +9,6 @@ import Quill from "quill"
 import "quill/dist/quill.snow.css"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 import InviteModal from "@/app/components/editor/InviteModal"
-import {User} from "@nextui-org/react";
 
 type Editor = {
   id: string
@@ -199,6 +198,7 @@ console.log(onlineUsers)
     if (wrapper === null) return
     wrapper.innerHTML = ""
     const editor = document.createElement("div")
+    editor.style.border = "none"
     wrapper.append(editor)
     const q = new Quill(editor, {
       theme: "snow",
@@ -281,8 +281,8 @@ console.log(onlineUsers)
   return (
     <div>
       {editorData ? (
-        <div className="px-40 py-2">
-          <div className="flex justify-between">
+        <div className="py-2">
+          <div className="flex justify-between px-6">
             <form
               onSubmit={onTitleSubmit}
               className="self-start flex justify-between"
@@ -309,7 +309,7 @@ console.log(onlineUsers)
             <InviteModal />
           </div>
           <div className="flex gap-10 justify-center pt-4">
-            <div ref={wrapperRef} className="w-full"></div>
+            <div ref={wrapperRef} className=""></div>
             <div className="flex flex-col gap-2 w-56">
               <h1>Online Collaborators</h1>
               {onlineUsers &&
