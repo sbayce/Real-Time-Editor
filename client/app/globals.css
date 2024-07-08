@@ -27,13 +27,13 @@ body {
   width: 8.5in;
   min-height: 11in;
   padding: 1in;
-  margin: 1rem;
+  /* margin: 1rem; */
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
-  border: none;
+  /* border: 1px solid #ccc !important; */
 }
 .ql-toolbar {
   padding: 1in;
-  margin: 1rem;
+  /* margin: 1rem; */
   width: 8.5in;
   position: sticky;
   top: 0;
