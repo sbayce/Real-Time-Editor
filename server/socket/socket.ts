@@ -70,13 +70,23 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("online_users", onlineUsers)
   }
 
-  socket.on("send-changes", async ({ delta, content }) => {
+  socket.on("send-changes", async ({ delta, content, index }) => {
     // await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
     //   content,
     //   roomId,
     // ])
-    redisClient.json.set(`editor:${roomId}`, "$.content", content)
-    socket.broadcast.to(roomId).emit("recieve-changes", delta)
+    console.log("index is: ", index)
+    // const redisContent = await redisClient.json.get(`editor:${roomId}`, {path: "$.content"})
+    // console.log(redisContent)
+
+    // index represents page. Set content of a certain page
+    redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
+    socket.broadcast.to(roomId).emit("recieve-changes", {delta, index})
+  })
+
+  // listen to new pages added
+  socket.on("add-page", ({index}) => {
+    socket.broadcast.to(roomId).emit("recieve-page", {index})
   })
 
   socket.on("update-selection-change", ({prevInnerHTML, prevInnerText}) => {

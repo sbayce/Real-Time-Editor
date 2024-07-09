@@ -26,10 +26,6 @@ type OnlineUser = {
   username: string,
   color: string
 }
-let prevSelection: any
-let prevText: any
-let prevInnerText: any
-let prevInnerHTML: any
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
@@ -38,7 +34,10 @@ const page = () => {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
   const [quill, setQuill] = useState<Quill | null>(null)
+  const [quills, setQuills] = useState<Quill[] | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [pages, setPages] = useState(1)
+  const [parent, setParent] = useState()
   
 console.log(onlineUsers)
   const viewEditor = async () => {
@@ -80,26 +79,13 @@ console.log(onlineUsers)
     setSocket(socket)
     setTitle(editorData?.title)
     console.log(editorData)
-    quill.setContents(editorData.content)
+    quill.setContents(editorData.content[0])
     quill.enable()
+
   }, [editorData, quill])
 
   useEffect(() => {
     if (!socket || !quill) return
-
-    socket.on("recieve-changes", (delta) => {
-      console.log("delta: " , delta.ops)
-      // console.log("current HTML: ", prevInnerHTML)
-      // console.log("current text: ", prevInnerText)
-      quill.updateContents(delta)
-    })
-
-    // socket.on("recieve-selection-change", (updatedSelection) => {
-    //   if(prevInnerText === updatedSelection.prevInnerText){
-    //     console.log("updated this client's HTML: " , updatedSelection.prevInnerHTML)
-    //     prevInnerHTML = updatedSelection.prevInnerHTML
-    //   }
-    // })
 
     socket.on("recieve_title", (title) => {
       setTitle(title)
@@ -108,11 +94,7 @@ console.log(onlineUsers)
     quill.on("text-change", (delta, oldDelta, source) => {
       if (source !== "user") return
       const content = quill.getContents()
-      socket.emit("send-changes", { delta: delta, content: content })
-      // console.log("current HTML: ", prevInnerHTML)
-      // console.log("current text: ", prevInnerText)
-      // console.log("prev HTML: ", prevInnerHTML)
-      // socket.emit("update-selection-change", {prevInnerHTML, prevInnerText})
+      socket.emit("send-changes", { delta: delta, content: content, index: 0 })
     })
 
     return () => {
@@ -121,9 +103,32 @@ console.log(onlineUsers)
   }, [socket, quill])
 
   useEffect(() => {
+    if(!socket || !quills || !parent || !editorData) return
+
+    if(Object.entries(editorData.content).length > 1){
+      for(const [key, value] of Object.entries(editorData.content)){
+        if(key === "0") continue
+        loadQuill(value)
+      }
+    }
+
+    socket.on("recieve-page", ({index}) => {
+      console.log("revieved new page")
+      const newQuill = initializeQuill(parent);
+      setQuills((prev: any) => [...prev, newQuill]);
+      newQuill.on("text-change", (delta, oldDelta, source) => {
+        if (source !== "user") return
+        const content = quills[index].getContents()
+        socket.emit("send-changes", { delta: delta, content: content, index })
+      })
+    })
+
+  }, [socket, parent, editorData])
+
+  useEffect(() => {
     if (!socket) return
 
-    socket?.on("online_users", (data) => {
+    socket.on("online_users", (data) => {
       console.log("online users are: " , data)
       setOnlineUsers(data)
     })
@@ -194,7 +199,22 @@ console.log(onlineUsers)
 
   console.log("socket: ", socket)
 
-  const wrapperRef = useCallback((wrapper: any) => {
+  const initializeQuill = useCallback((container: any) => {
+    const editor = document.createElement('div');
+    editor.style.border = 'none';
+    editor.className = 'page';
+    container.appendChild(editor);
+
+    const quillInstance = new Quill(editor, {
+      theme: 'snow',
+      modules: { toolbar: toolbarOptions },
+    });
+
+    return quillInstance
+
+  }, []);
+
+    const wrapperRef = useCallback((wrapper: any) => {
     if (wrapper === null) return
     wrapper.innerHTML = ""
     const editor = document.createElement("div")
@@ -204,8 +224,58 @@ console.log(onlineUsers)
       theme: "snow",
       modules: { toolbar: toolbarOptions },
     })
+    setParent(wrapper)
     setQuill(q)
+    setQuills([q])
   }, [])
+
+  const handleCreateQuill = () => {
+    if (parent && quills && socket) {
+      const newQuill = initializeQuill(parent);
+      setQuills((prev: any) => [...prev, newQuill]);
+      const index = quills.length
+      socket.emit("add-page", ({index}))
+      newQuill.on("text-change", (delta, oldDelta, source) => {
+        if (source !== "user") return
+        const content = newQuill.getContents()
+        socket.emit("send-changes", { delta: delta, content: content, index })
+      })
+    }
+  };
+  
+  /* This useEffect updates all the editors (quills) event listeners when new editors are added
+     States need to be updated: useEffect holds states of when it was created (state doesn't update)
+  */
+  useEffect(() => {
+    if(!quills || !socket) return
+    socket.off("recieve-changes")
+    socket.on("recieve-changes", ({delta, index}) => {
+      console.log("delta: " , delta.ops)
+      console.log("index: ", index)
+      const selectedQuill = quills[index]
+      selectedQuill.updateContents(delta)
+    })
+    quills.map((q, index) => {
+      q.off("text-change")
+
+      q.on("text-change", (delta, oldDelta, source) => {
+        if (source !== "user") return
+        const content = q.getContents()
+        socket.emit("send-changes", { delta, content, index })
+      })
+    })
+  }, [quills, socket])
+
+  const loadQuill = (content: any) => {
+    if (parent && quills && socket) {
+      console.log("loading page............................................... ", quills.length)
+      const newQuill = initializeQuill(parent);
+      setQuills((prev: any) => [...prev, newQuill]);
+      newQuill.setContents(content)
+      newQuill.enable()
+    }
+  }
+  console.log(quills)
 
   // const ql = document.querySelector(".ql-editor")
   // console.log(ql)
@@ -307,6 +377,7 @@ console.log(onlineUsers)
               </button>
             </form>
             <InviteModal />
+            <button onClick={handleCreateQuill}>add page</button>
           </div>
           <div className="flex gap-10 justify-center pt-4">
             <div ref={wrapperRef} className=""></div>
