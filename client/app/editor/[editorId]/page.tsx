@@ -185,15 +185,15 @@ console.log(onlineUsers)
   useEffect(() => {
     const ql = document.querySelector(".ql-editor")
 
-    if(ql){
-      ql.addEventListener("mouseup", handleMouseUp)
-      ql.addEventListener("mousedown", handleMouseDown)
+    // if(ql){
+    //   ql.addEventListener("mouseup", handleMouseUp)
+    //   ql.addEventListener("mousedown", handleMouseDown)
 
-      return () => {
-        ql.removeEventListener("mouseup", handleMouseUp)
-        ql.removeEventListener("mousedown", handleMouseDown)
-      }
-    }
+    //   return () => {
+    //     ql.removeEventListener("mouseup", handleMouseUp)
+    //     ql.removeEventListener("mousedown", handleMouseDown)
+    //   }
+    // }
 
   }, [quill, socket, onlineUsers])
 
@@ -249,22 +249,87 @@ console.log(onlineUsers)
   useEffect(() => {
     if(!quills || !socket) return
     socket.off("recieve-changes")
+    socket.off("recieve-selection")
+    socket.off("replace-selection")
+    socket.off("remove-selection")
     socket.on("recieve-changes", ({delta, index}) => {
       console.log("delta: " , delta.ops)
       console.log("index: ", index)
       const selectedQuill = quills[index]
       selectedQuill.updateContents(delta)
     })
+
+    socket.on("recieve-selection", ({selectionIndex, selectionLength, index, senderSocket}) => {
+      const selectedQuill = quills[index]
+      console.log("recieved selection: ", selectedQuill.getText(selectionIndex, selectionLength))
+      const user = onlineUsers?.find((user: OnlineUser) => user.socketId === senderSocket)
+      if(!user) return
+      const userColor = user.color
+      console.log(onlineUsers)
+      selectedQuill.formatText(selectionIndex, selectionLength, {
+        'background': userColor
+      }, "silent")
+    })
+    socket.on("replace-selection", ({selectionIndex, selectionLength, oldRange, index, senderSocket}) => {
+      const selectedQuill = quills[index]
+      const user = onlineUsers?.find((user: OnlineUser) => user.socketId === senderSocket)
+      if(!user) return
+      const userColor = user.color
+      console.log("replace this: ", selectedQuill.getText(oldRange), " with this: ", selectedQuill.getText(selectionIndex, selectionLength))
+      // preserve other formats and only remove 'background'
+      const oldRangeFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
+      delete oldRangeFormat.background
+      selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
+      selectedQuill.formatLine(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve line formatting
+      selectedQuill.formatText(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve text formatting
+      // highlight the new selection
+      selectedQuill.formatText(selectionIndex, selectionLength, {
+        'background': userColor
+      }, "silent")
+    })
+    socket.on("remove-selection", ({oldRange, index}) => {
+      const selectedQuill = quills[index]
+      console.log("remove: ", selectedQuill.getText(oldRange))
+      // preserve other formats and only remove 'background'
+      const currentFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
+      delete currentFormat.background
+      selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
+      selectedQuill.formatLine(oldRange.index, oldRange.length, currentFormat, "silent") //preserve line formatting
+      selectedQuill.formatText(oldRange.index, oldRange.length, currentFormat, "silent") //preserve text formatting
+    })
     quills.map((q, index) => {
       q.off("text-change")
+      q.off("selection-change")
 
       q.on("text-change", (delta, oldDelta, source) => {
         if (source !== "user") return
         const content = q.getContents()
         socket.emit("send-changes", { delta, content, index })
       })
+      q.on("selection-change", (range, oldRange, source) => {
+        if (source !== "user" || (!range && !oldRange)) return
+        if(!range && oldRange && oldRange.length !== 0){
+          // console.log("remove selection by focus: ", {oldRange})
+          socket.emit("remove-selection", {oldRange, index})
+        }else{
+          const selectionLength = range.length
+          const selectionIndex = range.index
+          if(selectionLength > 0 && (!oldRange || oldRange.length === 0) ){
+            console.log("selection: ")
+            socket.emit("selection-change", {selectionIndex, selectionLength, index})
+          }else if(selectionLength > 0 && oldRange && oldRange.length > 0) {
+            socket.emit("replace-selection", {selectionIndex, selectionLength, oldRange, index})
+            // console.log("new selection: ", {index, length})
+            // console.log("replace old: ", {oldRange})
+          }else if(selectionLength === 0 && oldRange && oldRange.length > 0){
+            // console.log("remove selection: ", {oldRange})
+            socket.emit("remove-selection", {oldRange, index})
+          }
+        }
+      })
     })
-  }, [quills, socket])
+
+  }, [quills, socket, onlineUsers])
 
   const loadQuill = (content: any) => {
     if (parent && quills && socket) {

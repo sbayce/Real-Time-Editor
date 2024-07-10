@@ -76,8 +76,6 @@ io.on("connection", (socket) => {
     //   roomId,
     // ])
     console.log("index is: ", index)
-    // const redisContent = await redisClient.json.get(`editor:${roomId}`, {path: "$.content"})
-    // console.log(redisContent)
 
     // index represents page. Set content of a certain page
     redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
@@ -89,8 +87,14 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("recieve-page", {index})
   })
 
-  socket.on("update-selection-change", ({prevInnerHTML, prevInnerText}) => {
-    socket.broadcast.to(roomId).emit("recieve-selection-change", {prevInnerHTML, prevInnerText})
+  socket.on("selection-change", ({selectionIndex, selectionLength, index}) => {
+    socket.broadcast.to(roomId).emit("recieve-selection", {selectionIndex, selectionLength, index, senderSocket: socket.id})
+  })
+  socket.on("replace-selection", ({selectionIndex, selectionLength, oldRange, index}) => {
+    socket.broadcast.to(roomId).emit("replace-selection", {selectionIndex, selectionLength, oldRange, index, senderSocket: socket.id})
+  })
+  socket.on("remove-selection", ({oldRange, index}) => {
+    socket.broadcast.to(roomId).emit("remove-selection", {oldRange, index})
   })
 
   socket.on("send_title", async (title) => {
