@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react"
 import { io, Socket } from "socket.io-client"
 import axios from "axios"
 import { Avatar, Chip } from "@nextui-org/react"
-import Quill from "quill"
+import Quill, { Bounds } from "quill"
 import "quill/dist/quill.snow.css"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 import InviteModal from "@/app/components/editor/InviteModal"
@@ -27,6 +27,12 @@ type OnlineUser = {
   color: string
 }
 
+type SelectionProperties = { // [ {index: 1, length: 3, bounds: {}}, {index: 1, length: 3, bounds: {}} ]
+  index: number,
+  length: number,
+  bounds: Bounds | null
+}
+
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
   const [title, setTitle] = useState(editorData?.title)
@@ -38,6 +44,7 @@ const page = () => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pages, setPages] = useState(1)
   const [parent, setParent] = useState()
+  const [selectionProperties, setSelectionProperties] = useState<SelectionProperties | null>()
   
 console.log(onlineUsers)
   const viewEditor = async () => {
@@ -183,7 +190,23 @@ console.log(onlineUsers)
   }
 
   useEffect(() => {
-    const ql = document.querySelector(".ql-editor")
+    if(!selectionProperties || !selectionProperties.bounds) return
+    const ql = document.querySelector(".ql-container.ql-snow")
+
+    const div = document.createElement('div');
+    div.className = 'absolute w-5 h-4 bg-red-400 opacity-40';
+    div.style.top = `${Math.floor(selectionProperties.bounds.top)}px`;
+    div.style.left = `${Math.floor(selectionProperties.bounds.left)}px`;
+    div.style.right = `${Math.floor(selectionProperties.bounds.right)}px`;
+    div.style.bottom = `${Math.floor(selectionProperties.bounds.bottom)}px`;
+    // div.style.bottom = `${Math.floor(bounds.bottom)}px`;
+    // div.style.right = `${Math.floor(bounds.right)}px`;
+    
+    // Append the div to the container
+    ql?.appendChild(div);
+    return () => {
+      ql?.removeChild(div)
+    }
 
     // if(ql){
     //   ql.addEventListener("mouseup", handleMouseUp)
@@ -195,7 +218,7 @@ console.log(onlineUsers)
     //   }
     // }
 
-  }, [quill, socket, onlineUsers])
+  }, [quill, socket, onlineUsers, selectionProperties])
 
   console.log("socket: ", socket)
 
@@ -252,11 +275,34 @@ console.log(onlineUsers)
     socket.off("recieve-selection")
     socket.off("replace-selection")
     socket.off("remove-selection")
+
     socket.on("recieve-changes", ({delta, index}) => {
       console.log("delta: " , delta.ops)
       console.log("index: ", index)
       const selectedQuill = quills[index]
       selectedQuill.updateContents(delta)
+
+      // live cursor update functionality
+      if(selectionProperties){
+        const changes = delta.ops
+        let isInsert = false
+        for(let i =0; i < changes.length; i++){
+          const change = changes[i]
+          console.log("here: ", change)
+          if("insert" in change){
+            isInsert = true
+            const insertedValue = change.insert
+            const valueLength = insertedValue.length
+            const newIndex = selectionProperties.index + valueLength
+            const newBounds = selectedQuill.getBounds(newIndex, selectionProperties.length)
+            setSelectionProperties({index: newIndex, length: selectionProperties.length, bounds: newBounds})
+          }
+        }
+        if(!isInsert){
+          const newBounds = selectedQuill.getBounds(selectionProperties.index, selectionProperties.length)
+          setSelectionProperties({index: selectionProperties.index, length: selectionProperties.length, bounds: newBounds})
+        }
+      }
     })
 
     socket.on("recieve-selection", ({selectionIndex, selectionLength, index, senderSocket}) => {
@@ -266,6 +312,9 @@ console.log(onlineUsers)
       if(!user) return
       const userColor = user.color
       console.log(onlineUsers)
+      const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
+      setSelectionProperties({index: selectionIndex, length: selectionLength, bounds: selectionBounds})
+      console.log(selectionBounds)
       selectedQuill.formatText(selectionIndex, selectionLength, {
         'background': userColor
       }, "silent")
@@ -301,7 +350,7 @@ console.log(onlineUsers)
       q.off("text-change")
       q.off("selection-change")
 
-      q.on("text-change", (delta, oldDelta, source) => {
+      q.on("text-change", (delta: any, oldDelta, source) => {
         if (source !== "user") return
         const content = q.getContents()
         socket.emit("send-changes", { delta, content, index })
@@ -329,7 +378,7 @@ console.log(onlineUsers)
       })
     })
 
-  }, [quills, socket, onlineUsers])
+  }, [quills, socket, onlineUsers, selectionProperties])
 
   const loadQuill = (content: any) => {
     if (parent && quills && socket) {
@@ -341,6 +390,7 @@ console.log(onlineUsers)
     }
   }
   console.log(quills)
+  console.log(selectionProperties)
 
   // const ql = document.querySelector(".ql-editor")
   // console.log(ql)
@@ -445,7 +495,7 @@ console.log(onlineUsers)
             <button onClick={handleCreateQuill}>add page</button>
           </div>
           <div className="flex gap-10 justify-center pt-4">
-            <div ref={wrapperRef} className=""></div>
+            <div ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56">
               <h1>Online Collaborators</h1>
               {onlineUsers &&
