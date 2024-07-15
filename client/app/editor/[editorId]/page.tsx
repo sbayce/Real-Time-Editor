@@ -137,41 +137,6 @@ console.log(onlineUsers)
   }, [isEditableTitle])
   console.log(socket)
 
-  const handleMouseUp = () => {
-    const selection = window.getSelection()
-    if(!quill || !socket || !onlineUsers || !selection || (selection.rangeCount === 0)) return
-    const range = selection.getRangeAt(0)
-    if(range.collapsed) return
-    const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket.id)
-    if(!user) return
-    const userColor = user.color
-    const text = range.toString()
-    console.log(text)
-    console.log(selection)
-    const span = document.createElement("span")
-    span.id = String(socket.id)
-    span.style.backgroundColor = userColor
-    span.textContent = text
-    range.deleteContents()
-    range.insertNode(span)
-  }
-
-  const handleMouseDown = () => {
-    try{
-      const ql = document.querySelector(".ql-editor")
-      if (!quill || !socket || !onlineUsers) return
-        const textToBeUnselected = ql?.querySelector(`#${socket.id}`)
-        console.log(textToBeUnselected)
-        if(textToBeUnselected){
-          console.log("alo")
-          let pa = textToBeUnselected?.parentNode
-          while(textToBeUnselected?.firstChild) pa?.insertBefore(textToBeUnselected.firstChild, textToBeUnselected)
-        }
-    }catch(e){
-      console.log(e)
-    }
-  }
-
   useEffect(() => {
     if(!selectionProperties || wrapperElements.length === 0) return
     console.log("wrapperElements: ", wrapperElements)
@@ -189,58 +154,25 @@ console.log(onlineUsers)
           // Append the div to the container
           const quillIndex = selectionProperty.quillIndex
           const ql = wrapperElements[quillIndex]
-          console.log("chosen ql: ", ql)
           ql.appendChild(div);
           divs.push({ div, ql });
         }
         
       }
       return () => {
-        console.log("cleanup!")
         divs.forEach(({ div, ql }) => {
           ql.removeChild(div);
         });
       };
 
-    // Cleanup function to remove all divs
-    
-    
-    // const ql = document.querySelector(".ql-container.ql-snow")
-
-    // const div = document.createElement('div');
-    // div.className = 'absolute w-0.5 h-4 bg-green-500 opacity-80';
-    // div.style.top = `${Math.floor(selectionProperties.bounds.top)}px`;
-    // div.style.left = `${Math.floor(selectionProperties.bounds.left)}px`;
-    // div.style.right = `${Math.floor(selectionProperties.bounds.right)}px`;
-    // div.style.bottom = `${Math.floor(selectionProperties.bounds.bottom)}px`;
-    // // div.style.bottom = `${Math.floor(bounds.bottom)}px`;
-    // // div.style.right = `${Math.floor(bounds.right)}px`;
-    
-    // // Append the div to the container
-    // ql?.appendChild(div);
-    // return () => {
-    //   ql?.removeChild(div)
-    // }
-
-    // if(ql){
-    //   ql.addEventListener("mouseup", handleMouseUp)
-    //   ql.addEventListener("mousedown", handleMouseDown)
-
-    //   return () => {
-    //     ql.removeEventListener("mouseup", handleMouseUp)
-    //     ql.removeEventListener("mousedown", handleMouseDown)
-    //   }
-    // }
-
   }, [quill, socket, onlineUsers, selectionProperties, wrapperElements])
 
   console.log("socket: ", socket)
 
-  const initializeQuill = useCallback((container: any, index?: number) => {
+  const initializeQuill = useCallback((container: any) => {
     const editor = document.createElement('div');
     editor.style.border = 'none';
     editor.className = 'page';
-    editor.id = String(index)
     container.appendChild(editor);
 
     const quillInstance = new Quill(editor, {
@@ -272,7 +204,7 @@ console.log(onlineUsers)
 
   const handleCreateQuill = () => {
     if (parent && quills && socket) {
-      const newQuill = initializeQuill(parent, wrapperElements.length);
+      const newQuill = initializeQuill(parent);
       setQuills((prev: any) => [...prev, newQuill]);
       const index = quills.length
       socket.emit("add-page", ({index}))
@@ -301,44 +233,6 @@ console.log(onlineUsers)
       selectedQuill.updateContents(delta)
 
       updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
-      // live cursor update functionality
-      // if(selectionProperties){
-      //   const changes = delta.ops
-      //   let isInsert = false
-      //   let isDelete = false
-      //   let retainValue = 0
-      //   for(let i =0; i < changes.length; i++){
-      //     const change = changes[i]
-      //     console.log("here: ", change)
-      //     if("retain" in change){
-      //       retainValue = change.retain
-      //       continue
-      //     }
-      //     if(retainValue){
-      //       if("insert" in change && retainValue && retainValue < selectionProperties.index){
-      //         isInsert = true
-      //         const insertedValue = change.insert
-      //         const valueLength = insertedValue.length
-      //         console.log("inserted length: ", valueLength)
-      //         const newIndex = selectionProperties.index + valueLength
-      //         const newBounds = selectedQuill.getBounds(newIndex, selectionProperties.length)
-      //         setSelectionProperties({index: newIndex, length: selectionProperties.length, bounds: newBounds})
-      //       }
-      //       if("delete" in change && retainValue && retainValue < selectionProperties.index){
-      //         isDelete = true
-      //         const deletedLength = change.delete
-      //         const newIndex = selectionProperties.index - deletedLength
-      //         const newBounds = selectedQuill.getBounds(newIndex, selectionProperties.length)
-      //         setSelectionProperties({index: newIndex, length: selectionProperties.length, bounds: newBounds})
-      //       }
-      //     }
-          
-      //   }
-      //   // if(!isInsert){
-      //   //   const newBounds = selectedQuill.getBounds(selectionProperties.index, selectionProperties.length)
-      //   //   setSelectionProperties({index: selectionProperties.index, length: selectionProperties.length, bounds: newBounds})
-      //   // }
-      // }
     })
 
     socket.on("recieve-selection", ({selectionIndex, selectionLength, index, senderSocket}) => {
@@ -426,7 +320,7 @@ console.log(onlineUsers)
   const loadQuill = (content: any) => {
     if (parent && quills && socket) {
       console.log("loading page............................................... ", quills.length)
-      const newQuill = initializeQuill(parent, wrapperElements.length);
+      const newQuill = initializeQuill(parent);
       setQuills((prev: any) => [...prev, newQuill]);
       newQuill.setContents(content)
       newQuill.enable()
@@ -435,76 +329,6 @@ console.log(onlineUsers)
   console.log(quills)
   console.log("selection Properties: ", selectionProperties)
 
-  // const ql = document.querySelector(".ql-editor")
-  // console.log(ql)
-  // ql?.addEventListener("mouseup", (e) => {
-  //   if(!quill) return
-  // const selection = quill?.getSelection()
-  // if(!selection) return
-  // console.log("selection: ", selection?.index)
-  // const index = selection.index
-  // const length = selection.length
-  // quill?.deleteText(index,length)
-  // quill.insertText(index, "h")
-  //   const selection = window.getSelection()
-  //   if (selection && selection.rangeCount > 0) {
-  //     // find user color from socket
-  //     const user = onlineUsers.find((user: OnlineUser) => user.socketId === socket?.id)
-  //     console.log(user)
-  //     const userColor = user?.color
-  //     console.log("color: ", userColor)
-  //     const range = selection.getRangeAt(0)
-  //     if (range && !range.collapsed && userColor && socket) {
-  //       prevText = range.toString()
-  //       prevSelection = selection
-  //       const span = document.createElement("span")
-  //       span.id = String(socket.id)
-  //       span.style.backgroundColor = userColor
-  //       span.textContent = range.toString()
-
-        // range.deleteContents()
-        // range.insertNode(span)
-  //       prevSelection = range
-  //       prevInnerHTML = prevSelection.commonAncestorContainer.innerHTML
-  //       prevInnerText = prevSelection.commonAncestorContainer.innerText
-
-  //       // Reselect the new range
-  //       selection.removeAllRanges();
-  //       const newRange = document.createRange();
-  //       newRange.selectNode(span);
-  //       selection.addRange(newRange);
-  //       // console.log(range)
-  //       // Deselect text after highlighting
-  //       // selection.removeAllRanges()
-  //     }
-  //   }
-  // })
-  // ql?.addEventListener("mousedown", () => {
-  //   try{
-  //     if (ql && socket) {
-  //       const textToBeUnselected = ql?.querySelector(`#${socket?.id}`)
-  //       if(textToBeUnselected){
-  //         console.log("alo")
-  //         let pa = textToBeUnselected?.parentNode
-  //         while(textToBeUnselected?.firstChild) pa?.insertBefore(textToBeUnselected.firstChild, textToBeUnselected)
-  //       }
-        
-  //       // console.log(prevSelection.commonAncestorContainer.innerHTML)
-  //       // console.log(prevSelection.commonAncestorContainer.innerText)
-  //       // console.log(prevInnerHTML)
-  //       // console.log(prevInnerText)
-  //       // prevSelection.commonAncestorContainer.innerHTML =
-  //       //   prevSelection.commonAncestorContainer.innerText
-  //       // prevInnerHTML = prevInnerText
-  //       // console.log("prev text: " + prevText)
-  //       // prevSelection.deleteContents()
-  //       // prevSelection.insertNode(prevText)
-  //     }
-  //   }catch(e){
-  //     console.log(e)
-  //   }
-    
-  // })
   const editorId = usePathname().split("/")[2]
   return (
     <div>
