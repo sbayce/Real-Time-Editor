@@ -31,7 +31,7 @@ const viewEditor = async (req: Request, res: Response) => {
         return
     }
       redisClient.json.set(`editor:${editorId}`, "$", editor)
-      redisClient.expire(`editor:${editorId}`, 300)
+      redisClient.expire(`editor:${editorId}`, 1000)
     }else{
       editor = cachedEditor
       const hasAccessPermission = checkAccessPermission(editor, userId)
