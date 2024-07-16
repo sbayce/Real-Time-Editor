@@ -4,6 +4,7 @@ type SelectionProperties = {
     index: number,
     length: number,
     bounds: Bounds | null,
-    quillIndex: number
+    quillIndex: number,
+    socketId: string
   }
   export default SelectionProperties

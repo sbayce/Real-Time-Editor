@@ -27,7 +27,7 @@ const updateLiveCursor = (delta: any, selectionProperties: SelectionProperties[]
               const newIndex = selectionIndex + valueLength
               const newBounds = selectedQuill.getBounds(newIndex, selectionLength)
               const updatedState = [...selectionProperties]
-              updatedState[i] = {index: newIndex, length: selectionLength, bounds: newBounds, quillIndex}
+              updatedState[i] = {index: newIndex, length: selectionLength, bounds: newBounds, quillIndex, socketId: updatedState[i].socketId}
               setSelectionProperties(updatedState)
             }
             if("delete" in change && retainValue && retainValue < selectionIndex){
@@ -36,7 +36,7 @@ const updateLiveCursor = (delta: any, selectionProperties: SelectionProperties[]
               const newIndex = selectionIndex - deletedLength
               const newBounds = selectedQuill.getBounds(newIndex, selectionLength)
               const updatedState = [...selectionProperties]
-              updatedState[i] = {index: newIndex, length: selectionLength, bounds: newBounds, quillIndex}
+              updatedState[i] = {index: newIndex, length: selectionLength, bounds: newBounds, quillIndex, socketId: updatedState[i].socketId}
               setSelectionProperties(updatedState)
             }
           }

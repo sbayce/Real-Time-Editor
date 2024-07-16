@@ -14,6 +14,7 @@ import Editor from "@/app/types/editor"
 import getUserColor from "@/utils/editor/get-user-color"
 import updateLiveCursor from "@/utils/editor/update-live-cursor"
 import SelectionProperties from "@/app/types/SelectionProperties"
+import renderLiveCursors from "@/utils/editor/render-live-cursors"
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
@@ -137,35 +138,17 @@ console.log(onlineUsers)
   }, [isEditableTitle])
   console.log(socket)
 
-  useEffect(() => {
-    if(!selectionProperties || wrapperElements.length === 0) return
-    console.log("wrapperElements: ", wrapperElements)
-      const divs: any[] =[]
-      for(let i = 0; i< selectionProperties.length; i++){
-        const selectionProperty = selectionProperties[i]
-        if(selectionProperty && selectionProperty.bounds){
-          const div = document.createElement('div');
-          div.className = 'absolute w-0.5 h-4 bg-green-500 opacity-80';
-          div.style.top = `${Math.floor(selectionProperty.bounds.top)}px`;
-          div.style.left = `${Math.floor(selectionProperty.bounds.left)}px`;
-          div.style.right = `${Math.floor(selectionProperty.bounds.right)}px`;
-          div.style.bottom = `${Math.floor(selectionProperty.bounds.bottom)}px`;
+  // useEffect(() => {
+  //   if(!selectionProperties || wrapperElements.length === 0) return
+  //   console.log("wrapperElements: ", wrapperElements)
+  //   const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
+  //   return () => {
+  //     divs.forEach(({ div, ql }) => {
+  //       ql.removeChild(div);
+  //     });
+  //   };
 
-          // Append the div to the container
-          const quillIndex = selectionProperty.quillIndex
-          const ql = wrapperElements[quillIndex]
-          ql.appendChild(div);
-          divs.push({ div, ql });
-        }
-        
-      }
-      return () => {
-        divs.forEach(({ div, ql }) => {
-          ql.removeChild(div);
-        });
-      };
-
-  }, [quill, socket, onlineUsers, selectionProperties, wrapperElements])
+  // }, [quill, socket, onlineUsers, selectionProperties, wrapperElements])
 
   console.log("socket: ", socket)
 
@@ -179,7 +162,7 @@ console.log(onlineUsers)
       theme: 'snow',
       modules: { toolbar: toolbarOptions },
     });
-    setWrapperElements((prev) => [...prev, editor])
+    // setWrapperElements((prev) => [...prev, editor])
 
     return quillInstance
 
@@ -199,7 +182,7 @@ console.log(onlineUsers)
     setParent(wrapper)
     setQuill(q)
     setQuills([q])
-    setWrapperElements([editor])
+    // setWrapperElements([editor])
   }, [])
 
   const handleCreateQuill = () => {
@@ -225,6 +208,7 @@ console.log(onlineUsers)
     socket.off("recieve-selection")
     socket.off("replace-selection")
     socket.off("remove-selection")
+    socket.off("recieve-cursor")
 
     socket.on("recieve-changes", ({delta, index}) => {
       console.log("delta: " , delta.ops)
@@ -232,7 +216,7 @@ console.log(onlineUsers)
       const selectedQuill = quills[index]
       selectedQuill.updateContents(delta)
 
-      updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
+      // updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
     })
 
     socket.on("recieve-selection", ({selectionIndex, selectionLength, index, senderSocket}) => {
@@ -242,15 +226,15 @@ console.log(onlineUsers)
       if(!user) return
       const userColor = user.color
       console.log(onlineUsers)
-      const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
-      setSelectionProperties((prev) => {
-        if(prev){
-          return [...prev, {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index}]
-        }else{
-          return [{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index}]
-        }
-      })
-      console.log(selectionBounds)
+      // const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
+      // setSelectionProperties((prev) => {
+      //   if(prev){
+      //     return [...prev, {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
+      //   }else{
+      //     return [{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
+      //   }
+      // })
+      // console.log(selectionBounds)
       selectedQuill.formatText(selectionIndex, selectionLength, {
         'background': userColor
       }, "silent")
@@ -272,6 +256,23 @@ console.log(onlineUsers)
         'background': userColor
       }, "silent")
     })
+    // socket.on("recieve-cursor", ({selectionIndex, selectionLength, index, senderSocket}) => {
+    //   const selectedQuill = quills[index]
+    //   console.log("quill index: ", selectedQuill)
+    //   const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
+    //   if(selectionProperties){
+    //     const updatedState = selectionProperties.map((selectionProperty: SelectionProperties) => {
+    //       if(selectionProperty.socketId === senderSocket){
+    //         return {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}
+    //       }else{
+    //         return selectionProperty
+    //       }
+    //     })
+    //     setSelectionProperties(updatedState)
+    //   }else{
+    //     setSelectionProperties([{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}])
+    //   }
+    // })
     socket.on("remove-selection", ({oldRange, index}) => {
       const selectedQuill = quills[index]
       console.log("remove: ", selectedQuill.getText(oldRange))
@@ -290,7 +291,7 @@ console.log(onlineUsers)
         if (source !== "user") return
         const content = q.getContents()
         socket.emit("send-changes", { delta, content, index })
-        updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
+        // updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
       })
       q.on("selection-change", (range, oldRange, source) => {
         if (source !== "user" || (!range && !oldRange)) return
@@ -301,7 +302,7 @@ console.log(onlineUsers)
           const selectionLength = range.length
           const selectionIndex = range.index
           if(selectionLength > 0 && (!oldRange || oldRange.length === 0) ){
-            console.log("selection: ")
+            console.log("selection: " )
             socket.emit("selection-change", {selectionIndex, selectionLength, index})
           }else if(selectionLength > 0 && oldRange && oldRange.length > 0) {
             socket.emit("replace-selection", {selectionIndex, selectionLength, oldRange, index})
@@ -310,6 +311,8 @@ console.log(onlineUsers)
           }else if(selectionLength === 0 && oldRange && oldRange.length > 0){
             // console.log("remove selection: ", {oldRange})
             socket.emit("remove-selection", {oldRange, index})
+          }else if(selectionLength === 0 && oldRange && oldRange.length === 0){
+            // socket.emit("cursor-update", {selectionIndex, selectionLength, index})
           }
         }
       })
@@ -327,7 +330,7 @@ console.log(onlineUsers)
     }
   }
   console.log(quills)
-  console.log("selection Properties: ", selectionProperties)
+  // console.log("selection Properties: ", selectionProperties)
 
   const editorId = usePathname().split("/")[2]
   return (

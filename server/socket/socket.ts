@@ -96,6 +96,9 @@ io.on("connection", (socket) => {
   socket.on("remove-selection", ({oldRange, index}) => {
     socket.broadcast.to(roomId).emit("remove-selection", {oldRange, index})
   })
+  socket.on("cursor-update", ({selectionIndex, selectionLength, index}) => {
+    socket.broadcast.to(roomId).emit("recieve-cursor", {selectionIndex, selectionLength, index, senderSocket: socket.id})
+  })
 
   socket.on("send_title", async (title) => {
     await pool.query("UPDATE editor SET title = $1 WHERE id = $2", [
