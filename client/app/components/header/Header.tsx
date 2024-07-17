@@ -9,11 +9,11 @@ const Header = () => {
   const {data, isLoading} = useQuery("me", getUser)
   return (
     <header className="flex justify-between items-center py-2 px-10">
-      <Link href="/home">Real-time Editor</Link>
+      <Link href="/home" className="fixed pt-8 z-20">Real-time Editor</Link>
       {isLoading && <p className="text-sm">loading...</p>}
       {data? <div className="flex flex-col">
         <Dropdown>
-          <DropdownTrigger>
+          <DropdownTrigger className="fixed right-2 pt-8">
             <Avatar color="secondary" name={data.username} className="cursor-pointer" />
           </DropdownTrigger>
           <DropdownMenu>

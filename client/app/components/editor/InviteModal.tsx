@@ -4,6 +4,7 @@ import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDis
 import { Toaster, toast } from 'sonner'
 import axios, { AxiosError } from "axios";
 import { usePathname } from "next/navigation";
+import AddIcon from "@/app/icons/add-outline.svg"
 
 const InviteModal = () => {
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
@@ -28,7 +29,7 @@ const InviteModal = () => {
   return (
     <>
     <Toaster position="top-center" />
-      <Button onPress={onOpen} radius="sm" variant="solid" color="primary">Invite</Button>
+      <Button onPress={onOpen} radius="sm" variant="ghost" color="primary" className="gap-1"><AddIcon className="w-4" />Invite</Button>
       <Modal 
         isOpen={isOpen} 
         onOpenChange={onOpenChange}
