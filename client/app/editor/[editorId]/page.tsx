@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { io, Socket } from "socket.io-client"
 import axios from "axios"
-import { Avatar, Chip } from "@nextui-org/react"
+import { Avatar, Button, Chip } from "@nextui-org/react"
 import Quill, { Bounds } from "quill"
 import "quill/dist/quill.snow.css"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
@@ -15,6 +15,7 @@ import getUserColor from "@/utils/editor/get-user-color"
 import updateLiveCursor from "@/utils/editor/update-live-cursor"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import renderLiveCursors from "@/utils/editor/render-live-cursors"
+import DocumentIcon from "@/app/icons/document-outline.svg"
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
@@ -162,6 +163,8 @@ console.log(onlineUsers)
       theme: 'snow',
       modules: { toolbar: toolbarOptions },
     });
+    const toolbar = quillInstance.getModule('toolbar').container
+    toolbar.style.visibility = 'hidden'
     // setWrapperElements((prev) => [...prev, editor])
 
     return quillInstance
@@ -179,6 +182,7 @@ console.log(onlineUsers)
       theme: "snow",
       modules: { toolbar: toolbarOptions },
     })
+    console.log(q.getModule("toolbar"))
     setParent(wrapper)
     setQuill(q)
     setQuills([q])
@@ -295,10 +299,19 @@ console.log(onlineUsers)
       })
       q.on("selection-change", (range, oldRange, source) => {
         if (source !== "user" || (!range && !oldRange)) return
+        if(range){
+          console.log("range: ", range)
+          const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
+          for(let i =0; i<toolbars.length; i++){
+            toolbars[i].style.visibility = 'hidden'
+          }
+          const toolbar:HTMLDivElement = q.getModule("toolbar").container
+          toolbar.style.visibility = 'visible'
+        }
         if(!range && oldRange && oldRange.length !== 0){
           // console.log("remove selection by focus: ", {oldRange})
           socket.emit("remove-selection", {oldRange, index})
-        }else{
+        }else if(range){
           const selectionLength = range.length
           const selectionIndex = range.index
           if(selectionLength > 0 && (!oldRange || oldRange.length === 0) ){
@@ -337,16 +350,16 @@ console.log(onlineUsers)
     <div>
       {editorData ? (
         <div className="py-2">
-          <div className="flex justify-between px-6">
+          <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">
             <form
               onSubmit={onTitleSubmit}
-              className="self-start flex justify-between"
+              className="self-start flex justify-between left-2 fixed"
             >
               <input
                 ref={inputRef}
                 value={title}
                 disabled={!isEditableTitle}
-                className="bg-transparent border-none hover:bg-none text-xl"
+                className="bg-transparent border-none hover:bg-none text-xl w-20 mr-2"
                 onChange={(e) => {
                   setTitle(e.target.value)
                 }}
@@ -362,9 +375,9 @@ console.log(onlineUsers)
               </button>
             </form>
             <InviteModal />
-            <button onClick={handleCreateQuill}>add page</button>
+            <Button radius="sm" variant="ghost" color="primary" onClick={handleCreateQuill}><DocumentIcon className="w-4" />Add page</Button>
           </div>
-          <div className="flex gap-10 justify-center pt-4">
+          <div className="flex gap-10 justify-center pt-40">
             <div ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56">
               <h1>Online Collaborators</h1>
