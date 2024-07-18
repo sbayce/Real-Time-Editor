@@ -161,7 +161,7 @@ console.log(onlineUsers)
 
     const quillInstance = new Quill(editor, {
       theme: 'snow',
-      modules: { toolbar: toolbarOptions },
+      modules: { toolbar: toolbarOptions, history: {userOnly: true} },
     });
     const toolbar = quillInstance.getModule('toolbar').container
     toolbar.style.visibility = 'hidden'
@@ -180,7 +180,7 @@ console.log(onlineUsers)
     wrapper.append(editor)
     const q = new Quill(editor, {
       theme: "snow",
-      modules: { toolbar: toolbarOptions },
+      modules: { toolbar: toolbarOptions, history: {userOnly: true} },
     })
     console.log(q.getModule("toolbar"))
     setParent(wrapper)
@@ -202,7 +202,7 @@ console.log(onlineUsers)
       })
     }
   };
-  
+
   /* This useEffect updates all the editors (quills) event listeners when new editors are added
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
   */
