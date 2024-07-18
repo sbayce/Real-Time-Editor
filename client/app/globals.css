@@ -29,8 +29,8 @@ body {
   min-height: 5in;
   padding: 1in;
   /* margin: 1rem; */
-  box-shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
-  /* border: 1px solid #ccc !important; */
+  /* box-shadow: 0 0 5px 0 rgba(0, 0, 0, .5); */
+  border: 1px solid #ccc !important;
   margin-bottom: 10px;
 }
 .ql-toolbar {

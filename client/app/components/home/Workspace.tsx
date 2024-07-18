@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import { Image } from "@nextui-org/react"
 import { useRouter } from "next/navigation"
 import AddIcon from "@/app/icons/add-outline.svg"
+import ThreeDotIcon from "@/app/icons/ellipsis-vertical.svg"
 import axios from "axios"
+import { User, Avatar, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownSection, DropdownItem, cn } from "@nextui-org/react"
 
 type WorkspaceProps = {
   owned: any
@@ -47,11 +49,26 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
               radius="none"
               className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem]"
             />
-            <div className="px-2 border pt-4">
-              <p className="font-medium">{editor.title}</p>
-              <p className="text-sm text-gray-400">
-                {dateFormat(editor.created_at)}
-              </p>
+            <div className="flex justify-between px-2 pt-4 border">
+              <div className="">
+                <p className="font-medium">{editor.title}</p>
+                <p className="text-sm text-gray-400">
+                  {dateFormat(editor.created_at)}
+                </p>
+              </div>
+              <Dropdown>
+                <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
+                  <ThreeDotIcon className="w-6 h-6 self-center opacity-70" />
+                </DropdownTrigger>
+                <DropdownMenu className="bg-red-500">
+                    <DropdownItem>
+                      <div >
+                        <p>Rename</p>
+                        <p>Delete</p>
+                      </div>
+                    </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
           </div>
         )
