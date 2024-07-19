@@ -25,8 +25,8 @@ body {
 }
 .ql-container.ql-snow {
   width: 8.5in;
-  /* min-height: 11in; */
-  min-height: 5in;
+  height: 11in;
+  /* min-height: 5in; */
   padding: 1in;
   /* margin: 1rem; */
   /* box-shadow: 0 0 5px 0 rgba(0, 0, 0, .5); */
@@ -60,7 +60,7 @@ body {
     visibility: hidden;
   }
   .ql-container.ql-snow {
-    border: none;
+    border: none !important;
     visibility: visible;
     width: 6.5in;
     height: 9in;
@@ -68,6 +68,7 @@ body {
     margin: 0;
     box-shadow: none;
     align-self: flex-start;
+    /* overflow: hidden !important; */
   }
   .ql-toolbar {
     display: none;
