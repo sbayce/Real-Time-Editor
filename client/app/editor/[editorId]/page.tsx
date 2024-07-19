@@ -73,6 +73,7 @@ console.log(onlineUsers)
     console.log(editorData)
     quill.setContents(editorData.content[0])
     quill.enable()
+    quill.focus()
 
   }, [editorData, quill])
 
@@ -295,6 +296,8 @@ console.log(onlineUsers)
         if (source !== "user") return
         const content = q.getContents()
         socket.emit("send-changes", { delta, content, index })
+        checkPageSize(q, index)
+
         // updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
       })
       q.on("selection-change", (range, oldRange, source) => {
@@ -344,6 +347,36 @@ console.log(onlineUsers)
   }
   console.log(quills)
   // console.log("selection Properties: ", selectionProperties)
+  
+  const checkPageSize = (quill: Quill, quillIndex: number) => {
+    if(!quill || !quills) return
+    console.log("checking")
+    let pageSize = quill.root.clientHeight
+    let sum = 0
+    for(let i =0; i< quill.root.children.length; i++){
+      sum += quill?.root.children[i].clientHeight
+    }
+    console.log("height: ", pageSize)
+    console.log("sum: ", sum)
+    if(sum > pageSize-50){
+      console.log("sum is bigger")
+      console.log(quills[quillIndex+1])
+      if(quills[quillIndex+1]){
+        console.log("alo")
+        console.log(quill.getLength()-1)
+        console.log(quill.getLength())
+        quill.deleteText(quill.getLength()-2, quill.getLength())
+        setTimeout(() => {
+          quill.blur()
+          quills[quillIndex+1].focus()
+        }, 0.1)
+        
+        
+      }else{
+        handleCreateQuill()
+      }
+    }
+  }
 
   const editorId = usePathname().split("/")[2]
   return (
@@ -379,21 +412,13 @@ console.log(onlineUsers)
           </div>
           <div className="flex gap-10 justify-center pt-40">
             <div ref={wrapperRef} className="relative"></div>
-            <div className="flex flex-col gap-2 w-56">
+            <div className="flex flex-col gap-2 w-56 absolute right-16">
               <h1>Online Collaborators</h1>
               {onlineUsers &&
                 onlineUsers.map((user: any) => {
                   return (
-                    // <div className="flex gap-2 items-center text-sm">
-                    // <Avatar size="sm" name={user.username} style={{borderColor: user.color}} className={`border-2`} />
-                    //   <div className="flex flex-col">
-                    //     <p>{user.username}</p>
-                    //     <p className=" text-gray-500">{user.email}</p>
-                    //   </div>
-                    // </div>
                       <Chip variant="light">
                         <div className="flex items-center gap-1">
-                          {/* <div className="rounded-full w-2 p-2" style={{backgroundColor: user.color}}></div> */}
                           <Avatar
                           size="sm"
                           style={{borderColor: user.color}} 
