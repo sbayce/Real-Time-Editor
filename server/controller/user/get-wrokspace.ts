@@ -18,11 +18,11 @@ const getWorkspace = async (req: Request, res: Response) => {
     })
     // Query the editor table for these editor_ids
     const ownedEditors = await postgres.query(
-      "SELECT id, title, created_at, updated_at FROM editor WHERE id = ANY($1::int[])",
+      "SELECT id, title, created_at, updated_at, snap_shot FROM editor WHERE id = ANY($1::int[])",
       [ownedEditorsIds]
     )
     const collaboratedEditors = await postgres.query(
-      "SELECT id, title, created_at, updated_at FROM editor WHERE id = ANY($1::int[])",
+      "SELECT id, title, created_at, updated_at, snap_shot FROM editor WHERE id = ANY($1::int[])",
       [collaboratedEditorIds]
     )
     res.status(200).json({owned: ownedEditors.rows, collaborated: collaboratedEditors.rows})

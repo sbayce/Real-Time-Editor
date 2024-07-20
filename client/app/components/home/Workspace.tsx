@@ -7,6 +7,7 @@ import AddIcon from "@/app/icons/add-outline.svg"
 import ThreeDotIcon from "@/app/icons/ellipsis-vertical.svg"
 import axios from "axios"
 import { User, Avatar, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownSection, DropdownItem, cn } from "@nextui-org/react"
+import { useQueryClient } from "react-query"
 
 type WorkspaceProps = {
   owned: any
@@ -17,6 +18,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
   const router = useRouter()
   const [ownedData, setOwnedData] = useState<null | any>(owned)
   const [collaboratedData, setCollaboratedData] = useState<null | any>(collaborated)
+  const queryClient = useQueryClient()
   console.log(ownedData)
 
   const dateFormat = (dateString: string) => {
@@ -27,6 +29,15 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     await axios.post("http://localhost:4000/user/create-editor", {}, {withCredentials: true}).then((res) => {
       console.log(res.data)
       setOwnedData([...ownedData, res.data])
+      queryClient.invalidateQueries("get-workSpace")
+    })
+  }
+  const deleteEditor = async (editorId: number) => {
+    await axios.delete(`http://localhost:4000/user/delete-editor/${editorId}`, {withCredentials: true}).then((res) => {
+      console.log(res.data)
+      const filteredOwnedData = ownedData.filter((editor: any) => editor.id !== editorId)
+      setOwnedData(filteredOwnedData)
+      queryClient.invalidateQueries("get-workSpace")
     })
   }
   return (
@@ -45,9 +56,9 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
             className="rounded-md flex flex-col cursor-pointer w-[208px]"
           >
             <Image
-              src="./img.jfif"
+              src={editor.snap_shot? editor.snap_shot : "./img.jfif"}
               radius="none"
-              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem]"
+              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem] border"
             />
             <div className="flex justify-between px-2 pt-4 border">
               <div className="">
@@ -58,14 +69,16 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
               </div>
               <Dropdown>
                 <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
-                  <ThreeDotIcon className="w-6 h-6 self-center opacity-70" />
+                  <button>
+                    <ThreeDotIcon className="w-6 h-6 self-center opacity-70" />
+                  </button>
                 </DropdownTrigger>
-                <DropdownMenu className="bg-red-500">
+                <DropdownMenu>
                     <DropdownItem>
-                      <div >
                         <p>Rename</p>
+                    </DropdownItem>
+                    <DropdownItem onClick={() => deleteEditor(editor.id)}>
                         <p>Delete</p>
-                      </div>
                     </DropdownItem>
                 </DropdownMenu>
               </Dropdown>

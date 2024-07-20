@@ -16,6 +16,8 @@ import updateLiveCursor from "@/utils/editor/update-live-cursor"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
+import html2canvas from "html2canvas"
+import { useQueryClient } from "react-query"
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
@@ -30,6 +32,33 @@ const page = () => {
   const [pages, setPages] = useState(1)
   const [parent, setParent] = useState()
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
+  const [canvas, setCanvas] = useState<HTMLCanvasElement>()
+  const queryClient = useQueryClient()
+  
+  const storeImage = async (img: any) => {
+    try {
+      await axios.post(`http://localhost:4000/editor/set-snapshot/${editorId}`, {img}, {withCredentials: true}).then((res) => {
+        console.log(res)
+        queryClient.invalidateQueries("get-workSpace")
+      })
+    } catch (err) {
+      console.error('Error storing image:', err);
+    }
+  }
+  
+
+  const captureScreenshot = () => {
+    const ql = document.querySelector(".ql-container.ql-snow");
+    if (!ql) return;
+  
+    html2canvas(ql, {
+      useCORS: true,
+    })
+      .then((canvas) => {
+        storeImage(canvas.toDataURL())
+      })
+      .catch((err) => console.error('Error capturing screenshot:', err));
+  };
   
 console.log(onlineUsers)
   const viewEditor = async () => {
@@ -409,9 +438,11 @@ console.log(onlineUsers)
             </form>
             <InviteModal />
             <Button radius="sm" variant="ghost" color="primary" onClick={handleCreateQuill}><DocumentIcon className="w-4" />Add page</Button>
+            <Button radius="sm" variant="ghost" color="primary" onClick={captureScreenshot}>Take screenshot</Button>
+            {canvas && <canvas></canvas>}
           </div>
           <div className="flex gap-10 justify-center pt-40">
-            <div ref={wrapperRef} className="relative"></div>
+              <div ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56 absolute right-16">
               <h1>Online Collaborators</h1>
               {onlineUsers &&
