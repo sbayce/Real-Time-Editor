@@ -18,6 +18,7 @@ import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
 import html2canvas from "html2canvas"
 import { useQueryClient } from "react-query"
+import debounce from "lodash.debounce"
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
@@ -34,7 +35,11 @@ const page = () => {
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
   const [canvas, setCanvas] = useState<HTMLCanvasElement>()
   const queryClient = useQueryClient()
-  
+
+  const debounceScreenShot = debounce(() => {
+    captureScreenshot()
+  }, 3000);
+    
   const storeImage = async (img: any) => {
     try {
       await axios.post(`http://localhost:4000/editor/set-snapshot/${editorId}`, {img}, {withCredentials: true}).then((res) => {
@@ -324,6 +329,9 @@ console.log(onlineUsers)
       q.on("text-change", (delta: any, oldDelta, source) => {
         if (source !== "user") return
         const content = q.getContents()
+        if(index === 0 ){
+          debounceScreenShot()
+        }
         socket.emit("send-changes", { delta, content, index })
         checkPageSize(q, index)
 
