@@ -33,7 +33,6 @@ const page = () => {
   const [pages, setPages] = useState(1)
   const [parent, setParent] = useState()
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
-  const [canvas, setCanvas] = useState<HTMLCanvasElement>()
   const queryClient = useQueryClient()
 
   const debounceScreenShot = debounce(() => {
@@ -135,19 +134,14 @@ console.log(onlineUsers)
     if(Object.entries(editorData.content).length > 1){
       for(const [key, value] of Object.entries(editorData.content)){
         if(key === "0") continue
-        loadQuill(value)
+        loadQuill(key, value)
       }
     }
 
     socket.on("recieve-page", ({index}) => {
       console.log("revieved new page")
-      const newQuill = initializeQuill(parent);
+      const newQuill = initializeQuill(parent, index);
       setQuills((prev: any) => [...prev, newQuill]);
-      newQuill.on("text-change", (delta, oldDelta, source) => {
-        if (source !== "user") return
-        const content = quills[index].getContents()
-        socket.emit("send-changes", { delta: delta, content: content, index })
-      })
     })
 
   }, [socket, parent, editorData])
@@ -188,10 +182,11 @@ console.log(onlineUsers)
 
   console.log("socket: ", socket)
 
-  const initializeQuill = useCallback((container: any) => {
+  const initializeQuill = useCallback((container: any, id: string) => {
     const editor = document.createElement('div');
     editor.style.border = 'none';
     editor.className = 'page';
+    editor.id = `quill-${id}`
     container.appendChild(editor);
 
     const quillInstance = new Quill(editor, {
@@ -206,12 +201,22 @@ console.log(onlineUsers)
 
   }, []);
 
+  const removeQuill = (container: any, index: number) => {
+    if(!socket || !quills) return
+    const quillElement = document.querySelector(`#quill-${index}`)
+    console.log(index)
+    console.log(container)
+    console.log(quillElement)
+    container.removeChild(quillElement)
+    setQuills((prev: any) => prev.splice(index, 1))
+  }
+
     const wrapperRef = useCallback((wrapper: any) => {
     if (wrapper === null) return
     wrapper.innerHTML = ""
     const editor = document.createElement("div")
     editor.style.border = "none"
-    editor.id = "0"
+    editor.id = "quill-0"
     wrapper.append(editor)
     const q = new Quill(editor, {
       theme: "snow",
@@ -226,9 +231,9 @@ console.log(onlineUsers)
 
   const handleCreateQuill = () => {
     if (parent && quills && socket) {
-      const newQuill = initializeQuill(parent);
-      setQuills((prev: any) => [...prev, newQuill]);
       const index = quills.length
+      const newQuill = initializeQuill(parent, String(index));
+      setQuills((prev: any) => [...prev, newQuill]);
       socket.emit("add-page", ({index}))
       newQuill.on("text-change", (delta, oldDelta, source) => {
         if (source !== "user") return
@@ -242,12 +247,22 @@ console.log(onlineUsers)
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
   */
   useEffect(() => {
-    if(!quills || !socket) return
+    if(!quills || !socket || !parent) return
     socket.off("recieve-changes")
     socket.off("recieve-selection")
     socket.off("replace-selection")
     socket.off("remove-selection")
     socket.off("recieve-cursor")
+    socket.off("page-to-remove")
+
+    socket.on("page-to-remove", (index) => {
+      if(!quills[index-1]) return
+      console.log("will remove page.")
+        console.log(quills[index])
+        quills[index].blur()
+        removeQuill(parent, index)
+        quills[index-1].focus()
+    })
 
     socket.on("recieve-changes", ({delta, index}) => {
       console.log("delta: " , delta.ops)
@@ -371,12 +386,12 @@ console.log(onlineUsers)
       })
     })
 
-  }, [quills, socket, onlineUsers, selectionProperties])
+  }, [quills, socket, onlineUsers, selectionProperties, parent])
 
-  const loadQuill = (content: any) => {
+  const loadQuill = (id: string, content: any) => {
     if (parent && quills && socket) {
       console.log("loading page............................................... ", quills.length)
-      const newQuill = initializeQuill(parent);
+      const newQuill = initializeQuill(parent, id);
       setQuills((prev: any) => [...prev, newQuill]);
       newQuill.setContents(content)
       newQuill.enable()
@@ -386,8 +401,16 @@ console.log(onlineUsers)
   // console.log("selection Properties: ", selectionProperties)
   
   const checkPageSize = (quill: Quill, quillIndex: number) => {
-    if(!quill || !quills) return
+    if(!quill || !quills || !socket) return
     console.log("checking")
+    if(quill.getLength() === 1 && quills[quillIndex-1]){
+      setTimeout(() => {
+        quill.blur()
+        removeQuill(parent, quillIndex)
+        socket.emit("remove-page", (quillIndex))
+        quills[quillIndex-1].focus()
+      }, 0.1)
+    }
     let pageSize = quill.root.clientHeight
     let sum = 0
     for(let i =0; i< quill.root.children.length; i++){
@@ -407,8 +430,6 @@ console.log(onlineUsers)
           quill.blur()
           quills[quillIndex+1].focus()
         }, 0.1)
-        
-        
       }else{
         handleCreateQuill()
       }
@@ -446,8 +467,6 @@ console.log(onlineUsers)
             </form>
             <InviteModal />
             <Button radius="sm" variant="ghost" color="primary" onClick={handleCreateQuill}><DocumentIcon className="w-4" />Add page</Button>
-            <Button radius="sm" variant="ghost" color="primary" onClick={captureScreenshot}>Take screenshot</Button>
-            {canvas && <canvas></canvas>}
           </div>
           <div className="flex gap-10 justify-center pt-40">
               <div ref={wrapperRef} className="relative"></div>

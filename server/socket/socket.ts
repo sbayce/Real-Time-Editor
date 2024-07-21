@@ -87,6 +87,11 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("recieve-page", {index})
   })
 
+  socket.on("remove-page", (index) => {
+    redisClient.json.del(`editor:${roomId}`, `$.content.${index}`) // remove page from redis
+    socket.broadcast.to(roomId).emit("page-to-remove", index)
+  })
+
   socket.on("selection-change", ({selectionIndex, selectionLength, index}) => {
     socket.broadcast.to(roomId).emit("recieve-selection", {selectionIndex, selectionLength, index, senderSocket: socket.id})
   })
