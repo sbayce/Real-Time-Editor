@@ -19,6 +19,8 @@ import DocumentIcon from "@/app/icons/document-outline.svg"
 import html2canvas from "html2canvas"
 import { useQueryClient } from "react-query"
 import debounce from "lodash.debounce"
+// import throttle from "lodash.throttle"
+import { Delta } from "quill/core"
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
@@ -35,9 +37,27 @@ const page = () => {
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
   const queryClient = useQueryClient()
 
+  function throttle(mainFunction: Function, delay: number) {
+    let timerFlag: any
+    let deltas: Delta[] = []
+  
+    return (delta: Delta) => {
+      console.log("current deltas: ", deltas)
+      if (!timerFlag) { 
+        mainFunction(delta); 
+        timerFlag = setTimeout(() => { 
+          timerFlag = null; 
+        }, delay);
+      }else{
+        deltas.push(delta)
+      }
+    };
+  }
+
   const debounceScreenShot = debounce(() => {
     captureScreenshot()
   }, 3000);
+  const throttledKeyPress = throttle((delta: Delta) => {bruh(delta)}, 2000)
     
   const storeImage = async (img: any) => {
     try {
@@ -50,7 +70,9 @@ const page = () => {
     }
   }
   
-
+  const bruh = (delta: Delta) => {
+    console.log("throt: ", delta)
+  }
   const captureScreenshot = () => {
     const ql = document.querySelector(".ql-container.ql-snow");
     if (!ql) return;
@@ -341,8 +363,9 @@ console.log(onlineUsers)
       q.off("text-change")
       q.off("selection-change")
 
-      q.on("text-change", (delta: any, oldDelta, source) => {
+      q.on("text-change", (delta: Delta, oldDelta, source) => {
         if (source !== "user") return
+        throttledKeyPress(delta)
         const content = q.getContents()
         if(index === 0 ){
           debounceScreenShot()
