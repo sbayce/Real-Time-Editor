@@ -13,9 +13,9 @@ const io = new Server(server, {
   },
 })
 
-type SocketData ={
-  email: string,
-  username: string,
+type SocketData = {
+  email: string
+  username: string
   color: string
 }
 
@@ -40,10 +40,18 @@ io.on("connection", (socket) => {
   let currentRoomMap = roomMap.get(roomId)
   if (!currentRoomMap) {
     var newRoomMap = new Map<string, SocketData>()
-    newRoomMap.set(socketId, {email: userEmail, username: username, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
+    newRoomMap.set(socketId, {
+      email: userEmail,
+      username: username,
+      color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+    })
     roomMap.set(roomId, newRoomMap)
   } else {
-    currentRoomMap?.set(socketId, {email: userEmail, username: username, color: "#" + Math.floor(Math.random()*16777215).toString(16)})
+    currentRoomMap?.set(socketId, {
+      email: userEmail,
+      username: username,
+      color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+    })
     roomMap.set(roomId, currentRoomMap)
   }
   // socketMap.set(socketId, userEmail)
@@ -63,7 +71,7 @@ io.on("connection", (socket) => {
         socketId: key,
         email: value.email,
         username: value.username,
-        color: value.color
+        color: value.color,
       })
     })
     console.log("online users: ", onlineUsers)
@@ -79,12 +87,12 @@ io.on("connection", (socket) => {
 
     // index represents page. Set content of a certain page
     redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
-    socket.broadcast.to(roomId).emit("recieve-changes", {delta, index})
+    socket.broadcast.to(roomId).emit("recieve-changes", { delta, index })
   })
 
   // listen to new pages added
-  socket.on("add-page", ({index}) => {
-    socket.broadcast.to(roomId).emit("recieve-page", {index})
+  socket.on("add-page", ({ index }) => {
+    socket.broadcast.to(roomId).emit("recieve-page", { index })
   })
 
   socket.on("remove-page", (index) => {
@@ -92,17 +100,45 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("page-to-remove", index)
   })
 
-  socket.on("selection-change", ({selectionIndex, selectionLength, index}) => {
-    socket.broadcast.to(roomId).emit("recieve-selection", {selectionIndex, selectionLength, index, senderSocket: socket.id})
+  socket.on(
+    "selection-change",
+    ({ selectionIndex, selectionLength, index }) => {
+      socket.broadcast
+        .to(roomId)
+        .emit("recieve-selection", {
+          selectionIndex,
+          selectionLength,
+          index,
+          senderSocket: socket.id,
+        })
+    }
+  )
+  socket.on(
+    "replace-selection",
+    ({ selectionIndex, selectionLength, oldRange, index }) => {
+      socket.broadcast
+        .to(roomId)
+        .emit("replace-selection", {
+          selectionIndex,
+          selectionLength,
+          oldRange,
+          index,
+          senderSocket: socket.id,
+        })
+    }
+  )
+  socket.on("remove-selection", ({ oldRange, index }) => {
+    socket.broadcast.to(roomId).emit("remove-selection", { oldRange, index })
   })
-  socket.on("replace-selection", ({selectionIndex, selectionLength, oldRange, index}) => {
-    socket.broadcast.to(roomId).emit("replace-selection", {selectionIndex, selectionLength, oldRange, index, senderSocket: socket.id})
-  })
-  socket.on("remove-selection", ({oldRange, index}) => {
-    socket.broadcast.to(roomId).emit("remove-selection", {oldRange, index})
-  })
-  socket.on("cursor-update", ({selectionIndex, selectionLength, index}) => {
-    socket.broadcast.to(roomId).emit("recieve-cursor", {selectionIndex, selectionLength, index, senderSocket: socket.id})
+  socket.on("cursor-update", ({ selectionIndex, selectionLength, index }) => {
+    socket.broadcast
+      .to(roomId)
+      .emit("recieve-cursor", {
+        selectionIndex,
+        selectionLength,
+        index,
+        senderSocket: socket.id,
+      })
   })
 
   socket.on("send_title", async (title) => {
@@ -110,24 +146,29 @@ io.on("connection", (socket) => {
       title,
       roomId,
     ])
+    redisClient.json.set(`editor:${roomId}`, `$.title`, title)
     socket.broadcast.to(roomId).emit("recieve_title", title)
   })
 
-  socket.on("disconnect", async() => {
+  socket.on("disconnect", async () => {
     console.log("socket id: " + socketId + " disconnected.")
     console.log(roomId)
     var currentRoomMap = roomMap.get(roomId)
     if (currentRoomMap) {
       currentRoomMap.delete(socketId)
       if (currentRoomMap.size === 0) {
-        let updatedContent: any = await redisClient.json.get(`editor:${roomId}`, {
-          path: "$.content"
-        })
-        if(updatedContent){ // check incase cache expires
+        let updatedContent: any = await redisClient.json.get(
+          `editor:${roomId}`,
+          {
+            path: "$.content",
+          }
+        )
+        if (updatedContent) {
+          // check incase cache expires
           // Convert content to JSON string because postgres accepts JSON strings
           updatedContent = updatedContent[0] //remove unnecessary wrapper array
           console.log("alo: ", updatedContent)
-          const jsonContent = JSON.stringify(updatedContent);
+          const jsonContent = JSON.stringify(updatedContent)
           await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
             jsonContent,
             roomId,
