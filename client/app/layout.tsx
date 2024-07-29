@@ -4,8 +4,19 @@ import "./globals.css"
 import { NextUIProvider } from "@nextui-org/react"
 import Header from "./components/header/Header"
 import ReactQueryProvider from "@/utils/providers/ReactQueryProvider"
+import { Roboto } from "next/font/google"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-inter",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,14 +30,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${roboto.variable}`}>
         <ReactQueryProvider>
-        <NextUIProvider>
-          <div className="flex flex-col min-h-screen light text-foreground bg-background">
-            <Header />
-            <div className="flex-1">{children}</div>
-          </div>
-        </NextUIProvider>
+          <NextUIProvider>
+            <div className="flex flex-col min-h-screen light text-foreground bg-background">
+              <Header />
+              <div className="flex-1">{children}</div>
+            </div>
+          </NextUIProvider>
         </ReactQueryProvider>
       </body>
     </html>
