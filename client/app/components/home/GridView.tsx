@@ -74,7 +74,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
             onClick={() => {
               router.push(`/editor/${editor.id}`)
             }}
-            className="rounded-sm transition flex flex-col cursor-pointer w-[208px] border hover:border-gray-300"
+            className="rounded-sm flex flex-col cursor-pointer w-[208px] border hover:border-gray-300"
           >
             <Image
               src={editor.snap_shot ? editor.snap_shot : "./img.jfif"}
@@ -83,7 +83,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
             />
             <div className="flex justify-between px-2 pt-4 border-t">
               <div className="">
-                <p className="font-medium">{editor.title}</p>
+                <p className="font-medium line-clamp-1 w-40">{editor.title}</p>
                 <p className="text-sm text-gray-400">
                   {formatDate(editor.created_at)}
                 </p>
