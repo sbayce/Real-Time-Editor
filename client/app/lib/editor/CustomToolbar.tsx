@@ -42,9 +42,10 @@ const CustomToolbar = () => {
 
       <select className="ql-font">
         <option selected>Sans Serif</option>
-        <option value="inter">Inter</option>
-        <option value="roboto">Roboto</option>
-        <option value="mirza">Mirza</option>
+        <option className="font-inter" value="inter">Inter</option>
+        <option value="lexend">Lexend</option>
+        <option className="font-roboto" value="roboto">Roboto</option>
+        <option className="font-mirza" value="mirza">Mirza</option>
         <option value="arial">Arial</option>
         <option value="times-new-roman">Times New Roman</option>
       </select>

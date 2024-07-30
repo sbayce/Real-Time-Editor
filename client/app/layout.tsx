@@ -4,18 +4,26 @@ import "./globals.css"
 import { NextUIProvider } from "@nextui-org/react"
 import Header from "./components/header/Header"
 import ReactQueryProvider from "@/utils/providers/ReactQueryProvider"
-import { Roboto } from "next/font/google"
+import { Roboto, Lexend, Mirza } from "next/font/google"
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
 })
 const roboto = Roboto({
   subsets: ["latin"],
   weight: "400",
-  variable: "--font-inter",
-  display: "swap",
+  variable: "--font-roboto",
+})
+const lexend = Lexend({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-lexend",
+})
+const mirza = Mirza({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-mirza",
 })
 
 export const metadata: Metadata = {
@@ -30,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${roboto.variable}`}>
+      <body className={`${inter.variable} ${roboto.variable} ${lexend.variable} ${mirza.variable}`}>
         <ReactQueryProvider>
           <NextUIProvider>
             <div className="flex flex-col min-h-screen light text-foreground bg-background">

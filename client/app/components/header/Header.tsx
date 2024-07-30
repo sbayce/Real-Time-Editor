@@ -19,7 +19,7 @@ const Header = () => {
   const { data, isLoading } = useQuery("me", getUser)
   return (
     <header className="flex justify-between items-center py-4 px-10">
-      <Link href="/home" className="fixed pt-8 z-20 font-medium text-xl">
+      <Link href="/home" className="fixed pt-8 z-20 font-medium text-xl font-mirza">
         Real-time Editor
       </Link>
       {isLoading && <p className="text-sm">loading...</p>}

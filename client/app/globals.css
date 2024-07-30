@@ -40,6 +40,12 @@ body {
 .ql-font-inter {
   font-family: var(--font-inter);
 }
+.ql-font-mirza {
+  font-family: var(--font-mirza);
+}
+.ql-font-lexend {
+  font-family: var(--font-lexend);
+}
 .ql-toolbar {
   /* padding-top: 100px; */
   /* margin: 1rem; */
