@@ -33,11 +33,46 @@ const CustomToolbar = () => {
       </select>
 
       <select className="ql-color">
-        <option value="">Default</option>
+      <option value="rgb(0, 0, 0)">Black</option>
+      <option value="rgb(230, 0, 0)">Red</option>
+      <option value="rgb(255, 153, 0)">Orange</option>
+      <option value="rgb(255, 255, 0)">Yellow</option>
+      <option value="rgb(0, 138, 0)">Green</option>
+      <option value="rgb(0, 102, 204)">Blue</option>
+      <option value="rgb(153, 51, 255)">Purple</option>
+      <option value="rgb(255, 255, 255)">White</option>
+      <option value="rgb(250, 204, 204)">Light Red</option>
+      <option value="rgb(255, 235, 204)">Light Orange</option>
+      <option value="rgb(255, 255, 204)">Light Yellow</option>
+      <option value="rgb(204, 232, 204)">Light Green</option>
+      <option value="rgb(204, 224, 245)">Light Blue</option>
+      <option value="rgb(235, 214, 255)">Light Purple</option>
+      <option value="rgb(187, 187, 187)">Grey</option>
+      <option value="rgb(240, 102, 102)">Dark Red</option>
+      <option value="rgb(255, 194, 102)">Dark Orange</option>
+      <option value="rgb(255, 255, 102)">Dark Yellow</option>
+      <option value="rgb(102, 185, 102)">Dark Green</option>
+      <option value="rgb(102, 163, 224)">Dark Blue</option>
+      <option value="rgb(194, 133, 255)">Dark Purple</option>
+      <option value="rgb(0, 0, 0)">Black</option>
       </select>
 
       <select className="ql-background">
-        <option value="">Default</option>
+      <option value="rgb(255, 255, 255)">White</option>
+      <option value="rgb(250, 204, 204)">Light Red</option>
+      <option value="rgb(255, 235, 204)">Light Orange</option>
+      <option value="rgb(255, 255, 204)">Light Yellow</option>
+      <option value="rgb(204, 232, 204)">Light Green</option>
+      <option value="rgb(204, 224, 245)">Light Blue</option>
+      <option value="rgb(235, 214, 255)">Light Purple</option>
+      <option value="rgb(187, 187, 187)">Grey</option>
+      <option value="rgb(240, 102, 102)">Dark Red</option>
+      <option value="rgb(255, 194, 102)">Dark Orange</option>
+      <option value="rgb(255, 255, 102)">Dark Yellow</option>
+      <option value="rgb(102, 185, 102)">Dark Green</option>
+      <option value="rgb(102, 163, 224)">Dark Blue</option>
+      <option value="rgb(194, 133, 255)">Dark Purple</option>
+      <option value="rgb(0, 0, 0)">Black</option>
       </select>
 
       <select className="ql-font">

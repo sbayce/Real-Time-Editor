@@ -85,7 +85,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
               <div className="">
                 <p className="font-medium line-clamp-1 w-40">{editor.title}</p>
                 <p className="text-sm text-gray-400">
-                  {formatDate(editor.created_at)}
+                  Opened {formatDate(editor.updated_at)}
                 </p>
               </div>
               <Dropdown>
