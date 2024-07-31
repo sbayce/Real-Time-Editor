@@ -255,6 +255,7 @@ const page = () => {
   const handleCreateQuill = () => {
     if (parent && quills && socket) {
       const index = quills.length
+      console.log("quill length: ", index)
       const newQuill = initializeQuill(parent, String(index))
       setQuills((prev: any) => [...prev, newQuill])
       socket.emit("add-page", { index })
@@ -424,7 +425,20 @@ const page = () => {
         if (index === 0) {
           debounceScreenShot()
         }
-        checkPageSize(q, index)
+        const shouldRevert = checkPageSize(q, index)
+        console.log("quillsss: ", quills)
+        if(shouldRevert){
+          q.updateContents(delta.invert(oldDelta))
+          if (quills[index + 1]) {
+            setTimeout(() => {
+              q.blur()
+              quills[index + 1].focus()
+            }, 0.1)
+          } else {
+            console.log("cant see")
+            handleCreateQuill()
+          }
+        }
 
         // updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
       })
@@ -478,10 +492,6 @@ const page = () => {
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills && socket) {
-      console.log(
-        "loading page............................................... ",
-        quills.length
-      )
       const newQuill = initializeQuill(parent, id)
       setQuills((prev: any) => [...prev, newQuill])
       newQuill.setContents(content)
@@ -493,7 +503,7 @@ const page = () => {
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {
     if (!quill || !quills || !socket) return
-    console.log("checking")
+    // removes page when the content is empty. Auto focuses to the previous page
     if (quill.getLength() === 1 && quills[quillIndex - 1]) {
       setTimeout(() => {
         quill.blur()
@@ -509,22 +519,11 @@ const page = () => {
     }
     console.log("height: ", pageSize)
     console.log("sum: ", sum)
+    console.log("quill length: ", quill.getLength())
     if (sum > pageSize - 50) {
-      console.log("sum is bigger")
-      console.log(quills[quillIndex + 1])
-      if (quills[quillIndex + 1]) {
-        console.log("alo")
-        console.log(quill.getLength() - 1)
-        console.log(quill.getLength())
-        quill.deleteText(quill.getLength() - 2, quill.getLength())
-        setTimeout(() => {
-          quill.blur()
-          quills[quillIndex + 1].focus()
-        }, 0.1)
-      } else {
-        handleCreateQuill()
-      }
+      return true
     }
+    return false
   }
 
   const editorId = usePathname().split("/")[2]
