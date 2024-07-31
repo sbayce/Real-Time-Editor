@@ -27,7 +27,7 @@ const updateContent = async (req: Request, res: Response) => {
       return
     }
     const updatedEditor = await postgres.query(
-      "UPDATE editor SET content = $1 WHERE id = $2",
+      "UPDATE editor SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
       [content, editorId]
     )
     if (updatedEditor.rowCount !== 1) {

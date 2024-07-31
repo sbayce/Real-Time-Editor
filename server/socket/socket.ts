@@ -169,7 +169,7 @@ io.on("connection", (socket) => {
           updatedContent = updatedContent[0] //remove unnecessary wrapper array
           console.log("alo: ", updatedContent)
           const jsonContent = JSON.stringify(updatedContent)
-          await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+          await pool.query("UPDATE editor SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", [
             jsonContent,
             roomId,
           ])
