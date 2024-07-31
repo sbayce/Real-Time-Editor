@@ -19,6 +19,7 @@
 body {
   /* background-color: black;
   color: white; */
+  font-family: var(--font-roboto);
 }
 .highlight {
   background-color: yellow;
@@ -33,6 +34,7 @@ body {
   border: 1px solid #ccc !important;
   margin-bottom: 10px;
   font-size: 16px;
+  font-family: var(--font-roboto);
 }
 .ql-font-roboto {
   font-family: var(--font-roboto);
