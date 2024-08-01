@@ -16,85 +16,33 @@ import updateLiveCursor from "@/utils/editor/update-live-cursor"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
-import html2canvas from "html2canvas"
 import { useQueryClient } from "react-query"
-import debounce from "lodash.debounce"
-// import throttle from "lodash.throttle"
 import { Delta } from "quill/core"
 import throttledKeyPress from "@/utils/editor/throttle-key-press"
 import CustomToolbar from "@/app/lib/editor/CustomToolbar"
+import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
+import debounceScreenShot from "@/utils/editor/debounce-screenshot"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
-Size.whitelist = [
-  "10px",
-  "12px",
-  "14px",
-  "16px",
-  "18px",
-  "20px",
-  "24px",
-  "30px",
-  "36px",
-  "48px",
-  "60px",
-  "72px",
-]
-Font.whitelist = ["times-new-roman", "inter", "roboto", "mirza", "arial"]
+Size.whitelist = sizeWhitelist
+Font.whitelist = fontWhitelist
 Quill.register(Font, true)
 Quill.register(Size, true)
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
   const [title, setTitle] = useState(editorData?.title)
-  const [isEditableTitle, setIsEditableTitle] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
   const [quill, setQuill] = useState<Quill | null>(null)
   const [quills, setQuills] = useState<Quill[] | null>(null)
   const [wrapperElements, setWrapperElements] = useState<HTMLDivElement[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
-  const [pages, setPages] = useState(1)
   const [parent, setParent] = useState()
-  const [selectionProperties, setSelectionProperties] = useState<
-    SelectionProperties[] | null
-  >(null)
+  const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
   const queryClient = useQueryClient()
   console.log("data: ", editorData)
-
-  const debounceScreenShot = debounce(() => {
-    captureScreenshot()
-  }, 3000)
-
-  const storeImage = async (img: any) => {
-    try {
-      await axios
-        .post(
-          `http://localhost:4000/editor/set-snapshot/${editorId}`,
-          { img },
-          { withCredentials: true }
-        )
-        .then((res) => {
-          console.log(res)
-          queryClient.invalidateQueries("get-workSpace")
-        })
-    } catch (err) {
-      console.error("Error storing image:", err)
-    }
-  }
-
-  const captureScreenshot = () => {
-    const ql = document.querySelector(".ql-container.ql-snow")
-    if (!ql) return
-
-    html2canvas(ql, {
-      useCORS: true,
-    })
-      .then((canvas) => {
-        storeImage(canvas.toDataURL())
-      })
-      .catch((err) => console.error("Error capturing screenshot:", err))
-  }
 
   console.log(onlineUsers)
   const viewEditor = async () => {
@@ -141,24 +89,6 @@ const page = () => {
   }, [editorData, quill])
 
   useEffect(() => {
-    if (!socket || !quill) return
-
-    socket.on("recieve_title", (title) => {
-      setTitle(title)
-    })
-
-    quill.on("text-change", (delta, oldDelta, source) => {
-      if (source !== "user") return
-      const content = quill.getContents()
-      socket.emit("send-changes", { delta: delta, content: content, index: 0 })
-    })
-
-    return () => {
-      quill.off("text-change")
-    }
-  }, [socket, quill])
-
-  useEffect(() => {
     if (!socket || !quills || !parent || !editorData) return
 
     if (Object.entries(editorData.content).length > 1) {
@@ -167,12 +97,6 @@ const page = () => {
         loadQuill(key, value)
       }
     }
-
-    socket.on("recieve-page", ({ index }) => {
-      console.log("revieved new page")
-      const newQuill = initializeQuill(parent, index)
-      setQuills((prev: any) => [...prev, newQuill])
-    })
   }, [socket, parent, editorData])
 
   useEffect(() => {
@@ -181,6 +105,14 @@ const page = () => {
     socket.on("online_users", (data) => {
       console.log("online users are: ", data)
       setOnlineUsers(data)
+    })
+    socket.on("recieve-page", ({ index }) => {
+      console.log("revieved new page")
+      const newQuill = initializeQuill(parent, index)
+      setQuills((prev: any) => [...prev, newQuill])
+    })
+    socket.on("recieve_title", (title) => {
+      setTitle(title)
     })
 
     return () => {
@@ -227,9 +159,6 @@ const page = () => {
   const removeQuill = (container: any, index: number) => {
     if (!socket || !quills) return
     const quillElement = document.querySelector(`#quill-${index}`)
-    console.log(index)
-    console.log(container)
-    console.log(quillElement)
     container.removeChild(quillElement)
     setQuills((prev: any) => prev.splice(index, 1))
   }
@@ -297,82 +226,44 @@ const page = () => {
       // updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
     })
 
-    socket.on(
-      "recieve-selection",
-      ({ selectionIndex, selectionLength, index, senderSocket }) => {
-        const selectedQuill = quills[index]
-        console.log(
-          "recieved selection: ",
-          selectedQuill.getText(selectionIndex, selectionLength)
-        )
-        const user = onlineUsers?.find(
-          (user: OnlineUser) => user.socketId === senderSocket
-        )
-        if (!user) return
-        const userColor = user.color
-        console.log(onlineUsers)
-        // const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
-        // setSelectionProperties((prev) => {
-        //   if(prev){
-        //     return [...prev, {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
-        //   }else{
-        //     return [{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
-        //   }
-        // })
-        // console.log(selectionBounds)
-        selectedQuill.formatText(
-          selectionIndex,
-          selectionLength,
-          {
-            background: userColor,
-          },
-          "silent"
-        )
-      }
+    socket.on("recieve-selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
+      const selectedQuill = quills[index]
+      console.log(
+        "recieved selection: ",
+        selectedQuill.getText(selectionIndex, selectionLength)
+      )
+      const user = onlineUsers?.find(
+        (user: OnlineUser) => user.socketId === senderSocket
+      )
+      if (!user) return
+      const userColor = user.color
+      console.log(onlineUsers)
+      // const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
+      // setSelectionProperties((prev) => {
+      //   if(prev){
+      //     return [...prev, {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
+      //   }else{
+      //     return [{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
+      //   }
+      // })
+      // console.log(selectionBounds)
+      selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
+    }
     )
-    socket.on(
-      "replace-selection",
-      ({ selectionIndex, selectionLength, oldRange, index, senderSocket }) => {
+    socket.on("replace-selection", ({ selectionIndex, selectionLength, oldRange, index, senderSocket }) => {
         const selectedQuill = quills[index]
-        const user = onlineUsers?.find(
-          (user: OnlineUser) => user.socketId === senderSocket
-        )
+        const user = onlineUsers?.find((user: OnlineUser) => user.socketId === senderSocket)
         if (!user) return
         const userColor = user.color
-        console.log(
-          "replace this: ",
-          selectedQuill.getText(oldRange),
-          " with this: ",
-          selectedQuill.getText(selectionIndex, selectionLength)
-        )
+        console.log("replace this: ",selectedQuill.getText(oldRange)," with this: ", selectedQuill.getText(selectionIndex, selectionLength))
         // preserve other formats and only remove 'background'
-        const oldRangeFormat = selectedQuill.getFormat(
-          oldRange.index,
-          oldRange.length
-        )
+        const oldRangeFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
         delete oldRangeFormat.background
         selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
-        selectedQuill.formatLine(
-          oldRange.index,
-          oldRange.length,
-          oldRangeFormat,
-          "silent"
-        ) //preserve line formatting
-        selectedQuill.formatText(
-          oldRange.index,
-          oldRange.length,
-          oldRangeFormat,
-          "silent"
-        ) //preserve text formatting
+        selectedQuill.formatLine(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve line formatting
+        selectedQuill.formatText(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve text formatting
         // highlight the new selection
-        selectedQuill.formatText(
-          selectionIndex,
-          selectionLength,
-          {
-            background: userColor,
-          },
-          "silent"
-        )
+        selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
       }
     )
     // socket.on("recieve-cursor", ({selectionIndex, selectionLength, index, senderSocket}) => {
@@ -396,24 +287,11 @@ const page = () => {
       const selectedQuill = quills[index]
       console.log("remove: ", selectedQuill.getText(oldRange))
       // preserve other formats and only remove 'background'
-      const currentFormat = selectedQuill.getFormat(
-        oldRange.index,
-        oldRange.length
-      )
+      const currentFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
       delete currentFormat.background
       selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
-      selectedQuill.formatLine(
-        oldRange.index,
-        oldRange.length,
-        currentFormat,
-        "silent"
-      ) //preserve line formatting
-      selectedQuill.formatText(
-        oldRange.index,
-        oldRange.length,
-        currentFormat,
-        "silent"
-      ) //preserve text formatting
+      selectedQuill.formatLine(oldRange.index, oldRange.length, currentFormat, "silent") //preserve line formatting
+      selectedQuill.formatText(oldRange.index, oldRange.length, currentFormat, "silent") //preserve text formatting
     })
     quills.map((q, index) => {
       q.off("text-change")
@@ -423,19 +301,19 @@ const page = () => {
         if (source !== "user") return
         throttledKeyPress(delta, q, index, socket)
         if (index === 0) {
-          debounceScreenShot()
+          debounceScreenShot(queryClient, editorId)
         }
-        const shouldRevert = checkPageSize(q, index)
-        console.log("quillsss: ", quills)
-        if(shouldRevert){
+        // check if new content increased page size beyond threshold
+        const shouldRevertChanges = checkPageSize(q, index)
+        if(shouldRevertChanges){
+          //should cancel the changes and add a new page
           q.updateContents(delta.invert(oldDelta))
-          if (quills[index + 1]) {
+          if (quills[index + 1]) { //switch to page below if it exists
             setTimeout(() => {
               q.blur()
               quills[index + 1].focus()
             }, 0.1)
           } else {
-            console.log("cant see")
             handleCreateQuill()
           }
         }
@@ -473,10 +351,7 @@ const page = () => {
               oldRange,
               index,
             })
-            // console.log("new selection: ", {index, length})
-            // console.log("replace old: ", {oldRange})
           } else if (selectionLength === 0 && oldRange && oldRange.length > 0) {
-            // console.log("remove selection: ", {oldRange})
             socket.emit("remove-selection", { oldRange, index })
           } else if (
             selectionLength === 0 &&
