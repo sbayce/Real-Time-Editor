@@ -7,7 +7,6 @@ import axios from "axios"
 import { Avatar, Button, Chip } from "@nextui-org/react"
 import Quill, { Bounds } from "quill"
 import "quill/dist/quill.snow.css"
-import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 import InviteModal from "@/app/components/editor/InviteModal"
 import OnlineUser from "@/app/types/online-user"
 import Editor from "@/app/types/editor"
@@ -35,8 +34,7 @@ const page = () => {
   const [title, setTitle] = useState(editorData?.title)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
-  const [quill, setQuill] = useState<Quill | null>(null)
-  const [quills, setQuills] = useState<Quill[] | null>(null)
+  const [quills, setQuills] = useState<Quill[]>([])
   const [wrapperElements, setWrapperElements] = useState<HTMLDivElement[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const [parent, setParent] = useState()
@@ -70,9 +68,8 @@ const page = () => {
   }, [])
 
   useEffect(() => {
-    if (!editorData || !quill) {
-      return
-    }
+    if (!editorData) return
+
     const socket: Socket = io("http://localhost:4000", {
       auth: {
         roomId: editorId,
@@ -83,19 +80,15 @@ const page = () => {
     setSocket(socket)
     setTitle(editorData?.title)
     console.log(editorData)
-    quill.setContents(editorData.content[0])
-    quill.enable()
-    quill.focus()
-  }, [editorData, quill])
+  }, [editorData])
 
   useEffect(() => {
-    if (!socket || !quills || !parent || !editorData) return
-
-    if (Object.entries(editorData.content).length > 1) {
-      for (const [key, value] of Object.entries(editorData.content)) {
-        if (key === "0") continue
-        loadQuill(key, value)
-      }
+    if (!socket || !parent || !editorData) return
+    if(Object.entries(editorData.content).length === 0){
+      handleCreateQuill()
+    }
+    for (const [key, value] of Object.entries(editorData.content)) {
+      loadQuill(key, value)
     }
   }, [socket, parent, editorData])
 
@@ -144,13 +137,12 @@ const page = () => {
     editor.className = "page"
     editor.id = `quill-${id}`
     container.appendChild(editor)
-
     const quillInstance = new Quill(editor, {
       theme: "snow",
-      modules: { toolbar: toolbarOptions, history: { userOnly: true } },
+      modules: { toolbar: `#toolbar`, history: { userOnly: true } },
     })
-    const toolbar = quillInstance.getModule("toolbar").container
-    toolbar.style.visibility = "hidden"
+    // const toolbar = quillInstance.getModule("toolbar").container
+    // toolbar.style.visibility = "hidden"
     // setWrapperElements((prev) => [...prev, editor])
 
     return quillInstance
@@ -167,17 +159,17 @@ const page = () => {
     if (wrapper === null) return
     wrapper.innerHTML = ""
     const editor = document.createElement("div")
-    editor.style.border = "none"
-    editor.id = "quill-0"
+    // editor.style.border = "none"
+    // editor.id = "quill-0"
     wrapper.append(editor)
-    const q = new Quill(editor, {
-      theme: "snow",
-      modules: { toolbar: "#toolbar", history: { userOnly: true } },
-    })
-    console.log(q.getModule("toolbar"))
+    // const q = new Quill(editor, {
+    //   theme: "snow",
+    //   modules: { toolbar: "#toolbar", history: { userOnly: true } },
+    // })
+    // console.log(q.getModule("toolbar"))
     setParent(wrapper)
-    setQuill(q)
-    setQuills([q])
+    // setQuill(q)
+    // setQuills([q])
     // setWrapperElements([editor])
   }, [])
 
@@ -188,11 +180,6 @@ const page = () => {
       const newQuill = initializeQuill(parent, String(index))
       setQuills((prev: any) => [...prev, newQuill])
       socket.emit("add-page", { index })
-      newQuill.on("text-change", (delta, oldDelta, source) => {
-        if (source !== "user") return
-        const content = newQuill.getContents()
-        socket.emit("send-changes", { delta: delta, content: content, index })
-      })
     }
   }
 
