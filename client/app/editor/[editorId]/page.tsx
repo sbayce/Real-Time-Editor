@@ -21,6 +21,7 @@ import throttledKeyPress from "@/utils/editor/throttle-key-press"
 import CustomToolbar from "@/app/lib/editor/CustomToolbar"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
+import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -139,7 +140,7 @@ const page = () => {
     container.appendChild(editor)
     const quillInstance = new Quill(editor, {
       theme: "snow",
-      modules: { toolbar: `#toolbar`, history: { userOnly: true } },
+      modules: { toolbar: toolbarOptions, history: { userOnly: true } },
     })
     // const toolbar = quillInstance.getModule("toolbar").container
     // toolbar.style.visibility = "hidden"
@@ -419,7 +420,7 @@ const page = () => {
             </Button>
           </div>
           <div className="flex gap-10 justify-center pt-40">
-            <CustomToolbar />
+            {/* <CustomToolbar /> */}
             <div ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56 absolute right-16">
               <h1>Online Collaborators</h1>
