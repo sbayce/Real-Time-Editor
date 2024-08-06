@@ -14,26 +14,46 @@ import {
 import Link from "next/link"
 import { useQuery } from "react-query"
 import getUser from "@/app/lib/user/get-user"
+import axios from "axios"
+import { useRouter } from "next/navigation"
+import { useQueryClient } from "react-query"
 
 const Header = () => {
+  const queryClient = useQueryClient()
+  const router = useRouter()
   const { data, isLoading } = useQuery("me", getUser)
+  
+  const handleLogout = async() => {
+    try{
+      await axios.post("http://localhost:4000/auth/logout", {}, {withCredentials: true})
+      queryClient.invalidateQueries("me")
+      queryClient.invalidateQueries("get-workSpace")
+      router.replace("/signin")
+    }catch(e: any){
+      console.log(e.message)
+    }
+  }
+
   return (
     <header className="flex justify-between items-center py-4 px-10">
       <Link href="/home" className="fixed pt-8 z-20 font-medium text-xl font-roboto">
         Real-time Editor
       </Link>
       {isLoading && <p className="text-sm">loading...</p>}
+      <div className="fixed right-2 pt-8">
       {data ? (
         <div className="flex flex-col">
           <Dropdown>
-            <DropdownTrigger className="fixed right-2 pt-8">
+            <DropdownTrigger>
               <Avatar
                 color="secondary"
                 name={data.username}
                 className="cursor-pointer"
               />
             </DropdownTrigger>
-            <DropdownMenu>
+            <DropdownMenu onAction={(key) => {
+              if(key === 'logout') handleLogout()
+            }}>
               <DropdownSection>
                 <DropdownItem>
                   <div className="flex flex-col gap-2">
@@ -57,8 +77,10 @@ const Header = () => {
           {/* <User name={data.username} description={data.email} /> */}
         </div>
       ) : (
-        !isLoading && <Button>Login</Button>
+        !isLoading && <Button onClick={() => router.replace("/signin")}>Login</Button>
       )}
+      </div>
+      
     </header>
   )
 }

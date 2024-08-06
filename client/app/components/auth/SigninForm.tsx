@@ -5,8 +5,10 @@ import axios from "axios"
 import { useRouter } from "next/navigation"
 import { Input } from "@nextui-org/input"
 import { Button } from "@nextui-org/react"
+import { useQueryClient } from "react-query"
 
 const SigninForm = () => {
+  const queryClient = useQueryClient()
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -24,6 +26,7 @@ const SigninForm = () => {
           { withCredentials: true }
         )
         .then(() => {
+          queryClient.invalidateQueries('me')
           router.push("/home")
         })
         .catch((err) => {
