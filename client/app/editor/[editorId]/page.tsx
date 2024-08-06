@@ -22,6 +22,7 @@ import CustomToolbar from "@/app/lib/editor/CustomToolbar"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
+import changeCursorPosition from "@/utils/editor/change-cursor-position"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -118,17 +119,17 @@ const page = () => {
 
   console.log(socket)
 
-  // useEffect(() => {
-  //   if(!selectionProperties || wrapperElements.length === 0) return
-  //   console.log("wrapperElements: ", wrapperElements)
-  //   const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
-  //   return () => {
-  //     divs.forEach(({ div, ql }) => {
-  //       ql.removeChild(div);
-  //     });
-  //   };
+  useEffect(() => {
+    if(!selectionProperties || wrapperElements.length === 0) return
+    console.log("wrapperElements: ", wrapperElements)
+    const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
+    return () => {
+      divs.forEach(({ div, ql }) => {
+        ql.removeChild(div);
+      });
+    };
 
-  // }, [quill, socket, onlineUsers, selectionProperties, wrapperElements])
+  }, [socket, onlineUsers, selectionProperties, wrapperElements])
 
   console.log("socket: ", socket)
 
@@ -142,9 +143,11 @@ const page = () => {
       theme: "snow",
       modules: { toolbar: toolbarOptions, history: { userOnly: true } },
     })
-    // const toolbar = quillInstance.getModule("toolbar").container
-    // toolbar.style.visibility = "hidden"
-    // setWrapperElements((prev) => [...prev, editor])
+    setWrapperElements((prev) => [...prev, editor])
+    if(id !== '0'){ // hide other toolbars
+      const toolbar = quillInstance.getModule("toolbar").container
+      toolbar.style.visibility = "hidden"
+    }
 
     return quillInstance
   }, [])
@@ -211,7 +214,7 @@ const page = () => {
       const selectedQuill = quills[index]
       selectedQuill.updateContents(delta)
 
-      // updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
+      updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
     })
 
     socket.on("recieve-selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
@@ -226,15 +229,7 @@ const page = () => {
       if (!user) return
       const userColor = user.color
       console.log(onlineUsers)
-      // const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
-      // setSelectionProperties((prev) => {
-      //   if(prev){
-      //     return [...prev, {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
-      //   }else{
-      //     return [{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}]
-      //   }
-      // })
-      // console.log(selectionBounds)
+      changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
       selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
     }
     )
@@ -252,26 +247,15 @@ const page = () => {
         selectedQuill.formatText(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve text formatting
         // highlight the new selection
         selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
+        changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
       }
     )
-    // socket.on("recieve-cursor", ({selectionIndex, selectionLength, index, senderSocket}) => {
-    //   const selectedQuill = quills[index]
-    //   console.log("quill index: ", selectedQuill)
-    //   const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
-    //   if(selectionProperties){
-    //     const updatedState = selectionProperties.map((selectionProperty: SelectionProperties) => {
-    //       if(selectionProperty.socketId === senderSocket){
-    //         return {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}
-    //       }else{
-    //         return selectionProperty
-    //       }
-    //     })
-    //     setSelectionProperties(updatedState)
-    //   }else{
-    //     setSelectionProperties([{index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}])
-    //   }
-    // })
-    socket.on("remove-selection", ({ oldRange, index }) => {
+    socket.on("recieve-cursor", ({selectionIndex, selectionLength, index, senderSocket}) => {
+      const selectedQuill = quills[index]
+      console.log("quill index: ", selectedQuill)
+      changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
+    })
+    socket.on("remove-selection", ({ selectionIndex, selectionLength, oldRange, index, senderSocket }) => {
       const selectedQuill = quills[index]
       console.log("remove: ", selectedQuill.getText(oldRange))
       // preserve other formats and only remove 'background'
@@ -280,6 +264,7 @@ const page = () => {
       selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
       selectedQuill.formatLine(oldRange.index, oldRange.length, currentFormat, "silent") //preserve line formatting
       selectedQuill.formatText(oldRange.index, oldRange.length, currentFormat, "silent") //preserve text formatting
+      changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
     })
     quills.map((q, index) => {
       q.off("text-change")
@@ -306,7 +291,7 @@ const page = () => {
           }
         }
 
-        // updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
+        updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
       })
       q.on("selection-change", (range, oldRange, source) => {
         if (source !== "user" || (!range && !oldRange)) return
@@ -340,13 +325,13 @@ const page = () => {
               index,
             })
           } else if (selectionLength === 0 && oldRange && oldRange.length > 0) {
-            socket.emit("remove-selection", { oldRange, index })
+            socket.emit("remove-selection", { selectionIndex, selectionLength, oldRange, index })
           } else if (
             selectionLength === 0 &&
             oldRange &&
             oldRange.length === 0
           ) {
-            // socket.emit("cursor-update", {selectionIndex, selectionLength, index})
+            socket.emit("cursor-update", {selectionIndex, selectionLength, index})
           }
         }
       })

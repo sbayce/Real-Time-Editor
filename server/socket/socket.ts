@@ -127,8 +127,8 @@ io.on("connection", (socket) => {
         })
     }
   )
-  socket.on("remove-selection", ({ oldRange, index }) => {
-    socket.broadcast.to(roomId).emit("remove-selection", { oldRange, index })
+  socket.on("remove-selection", ({ selectionIndex, selectionLength, oldRange, index }) => {
+    socket.broadcast.to(roomId).emit("remove-selection", { selectionIndex, selectionLength, oldRange, index, senderSocket: socket.id })
   })
   socket.on("cursor-update", ({ selectionIndex, selectionLength, index }) => {
     socket.broadcast

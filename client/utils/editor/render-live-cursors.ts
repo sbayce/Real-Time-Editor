@@ -9,7 +9,7 @@ const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUse
         const userColor = getUserColor(onlineUsers, selectionProperty.socketId)
         if(selectionProperty && selectionProperty.bounds){
           const div = document.createElement('div');
-          div.className = `absolute w-1 h-5 animate-pulse`;
+          div.className = `absolute cursor animate-pulse`;
           div.style.backgroundColor = userColor
           div.style.top = `${Math.floor(selectionProperty.bounds.top)}px`;
           div.style.left = `${Math.floor(selectionProperty.bounds.left)}px`;
