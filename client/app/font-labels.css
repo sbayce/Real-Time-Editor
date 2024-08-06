@@ -26,6 +26,9 @@
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
   content: 'Times new roman';
 }
+.ql-snow .ql-picker.ql-font {
+  width: 150px !important;
+}
 
 .ql-font-roboto {
     font-family: var(--font-roboto);
