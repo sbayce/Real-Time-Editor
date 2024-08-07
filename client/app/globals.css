@@ -41,6 +41,22 @@ body {
 .cursor{
   width: 2px;
   height: 20px;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  from, to {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.ql-formats button{
+  margin: 0 4px;
+  border-radius: 5px;
+}
+.ql-formats button:hover{
+  background-color: #A6A9B1 !important;
 }
 .ql-toolbar {
   /* padding-top: 100px; */
