@@ -17,7 +17,7 @@ const SignupForm = () => {
       event.preventDefault()
       await axios
         .post(
-          "http://localhost:4000/auth/signup",
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
           {
             username: username,
             email: email,

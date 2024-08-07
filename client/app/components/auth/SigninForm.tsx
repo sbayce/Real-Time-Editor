@@ -18,7 +18,7 @@ const SigninForm = () => {
       event.preventDefault()
       await axios
         .post(
-          "http://localhost:4000/auth/signin",
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signin`,
           {
             email: email,
             password: password,

@@ -22,7 +22,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
   const createEditor = async () => {
     await axios
       .post(
-        "http://localhost:4000/user/create-editor",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/create-editor`,
         {},
         { withCredentials: true }
       )
@@ -34,7 +34,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
   }
   const deleteEditor = async (editorId: number) => {
     await axios
-      .delete(`http://localhost:4000/user/delete-editor/${editorId}`, {
+      .delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/delete-editor/${editorId}`, {
         withCredentials: true,
       })
       .then((res) => {

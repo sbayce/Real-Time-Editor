@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react"
 import { io, Socket } from "socket.io-client"
 import axios from "axios"
 import { Avatar, Button, Chip } from "@nextui-org/react"
-import Quill, { Bounds } from "quill"
+import Quill from "quill"
 import "quill/dist/quill.snow.css"
 import InviteModal from "@/app/components/editor/InviteModal"
 import OnlineUser from "@/app/types/online-user"
@@ -18,7 +18,6 @@ import DocumentIcon from "@/app/icons/document-outline.svg"
 import { useQueryClient } from "react-query"
 import { Delta } from "quill/core"
 import throttledKeyPress from "@/utils/editor/throttle-key-press"
-import CustomToolbar from "@/app/lib/editor/CustomToolbar"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
@@ -48,7 +47,7 @@ const page = () => {
   const viewEditor = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:4000/user/view-editor/${editorId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/view-editor/${editorId}`,
         {
           withCredentials: true,
         }
@@ -72,7 +71,7 @@ const page = () => {
   useEffect(() => {
     if (!editorData) return
 
-    const socket: Socket = io("http://localhost:4000", {
+    const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL}`, {
       auth: {
         roomId: editorId,
         userEmail: editorData.userEmail,
@@ -136,7 +135,6 @@ const page = () => {
   const initializeQuill = useCallback((container: any, id: string) => {
     const editor = document.createElement("div")
     editor.style.border = "none"
-    editor.className = "page"
     editor.id = `quill-${id}`
     container.appendChild(editor)
     const quillInstance = new Quill(editor, {
@@ -163,18 +161,8 @@ const page = () => {
     if (wrapper === null) return
     wrapper.innerHTML = ""
     const editor = document.createElement("div")
-    // editor.style.border = "none"
-    // editor.id = "quill-0"
     wrapper.append(editor)
-    // const q = new Quill(editor, {
-    //   theme: "snow",
-    //   modules: { toolbar: "#toolbar", history: { userOnly: true } },
-    // })
-    // console.log(q.getModule("toolbar"))
     setParent(wrapper)
-    // setQuill(q)
-    // setQuills([q])
-    // setWrapperElements([editor])
   }, [])
 
   const handleCreateQuill = () => {
@@ -223,21 +211,14 @@ const page = () => {
         "recieved selection: ",
         selectedQuill.getText(selectionIndex, selectionLength)
       )
-      const user = onlineUsers?.find(
-        (user: OnlineUser) => user.socketId === senderSocket
-      )
-      if (!user) return
-      const userColor = user.color
-      console.log(onlineUsers)
+      const userColor = getUserColor(onlineUsers, senderSocket)
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
       selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
     }
     )
     socket.on("replace-selection", ({ selectionIndex, selectionLength, oldRange, index, senderSocket }) => {
         const selectedQuill = quills[index]
-        const user = onlineUsers?.find((user: OnlineUser) => user.socketId === senderSocket)
-        if (!user) return
-        const userColor = user.color
+        const userColor = getUserColor(onlineUsers, senderSocket)
         console.log("replace this: ",selectedQuill.getText(oldRange)," with this: ", selectedQuill.getText(selectionIndex, selectionLength))
         // preserve other formats and only remove 'background'
         const oldRangeFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
@@ -405,7 +386,6 @@ const page = () => {
             </Button>
           </div>
           <div className="flex gap-10 justify-center pt-40">
-            {/* <CustomToolbar /> */}
             <div ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56 absolute right-16">
               <h1>Online Collaborators</h1>

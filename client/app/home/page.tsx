@@ -15,7 +15,7 @@ const Home = () => {
 
   const getWorkspace = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/user/get-workspace", {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get-workspace`, {
         withCredentials: true,
       })
       return res.data

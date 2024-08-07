@@ -25,7 +25,7 @@ const Header = () => {
   
   const handleLogout = async() => {
     try{
-      await axios.post("http://localhost:4000/auth/logout", {}, {withCredentials: true})
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {}, {withCredentials: true})
       queryClient.invalidateQueries("me")
       queryClient.invalidateQueries("get-workSpace")
       router.replace("/signin")
@@ -40,7 +40,7 @@ const Header = () => {
         Real-time Editor
       </Link>
       {isLoading && <p className="text-sm">loading...</p>}
-      <div className="fixed right-2 pt-8">
+      <div className="fixed z-10 right-2 pt-8">
       {data ? (
         <div className="flex flex-col">
           <Dropdown>

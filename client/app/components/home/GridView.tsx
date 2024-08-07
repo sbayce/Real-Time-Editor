@@ -47,7 +47,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
       }
       await axios
         .post(
-          `http://localhost:4000/editor/update-title/${editorId}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/editor/update-title/${editorId}`,
           {
             title: title,
           },
@@ -81,7 +81,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
               radius="none"
               className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem] "
             />
-            <div className="flex justify-between px-2 pt-4 border-t">
+            <div className="flex justify-between px-2 pt-4 border-t items-center">
               <div className="">
                 <p className="font-medium line-clamp-1 w-40">{editor.title}</p>
                 <p className="text-sm text-gray-400">
@@ -91,7 +91,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
               <Dropdown>
                 <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
                   <button>
-                    <ThreeDotIcon className="w-6 h-6 self-center opacity-70" />
+                    <ThreeDotIcon className="w-5 h-5 self-center opacity-70" />
                   </button>
                 </DropdownTrigger>
                 <DropdownMenu>

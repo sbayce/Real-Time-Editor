@@ -30,7 +30,7 @@ const InviteModal = () => {
       }
       await axios
         .post(
-          `http://localhost:4000/user/invite-collaborator/${editorId}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/invite-collaborator/${editorId}`,
           {
             email: email,
           },
