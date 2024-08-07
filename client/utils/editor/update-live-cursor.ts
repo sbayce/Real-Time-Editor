@@ -19,7 +19,7 @@ const updateLiveCursor = (delta: any, selectionProperties: SelectionProperties[]
             continue
           }
           if(retainValue){
-            if("insert" in change && retainValue && retainValue < selectionIndex){
+            if("insert" in change && retainValue && retainValue <= selectionIndex){
               isInsert = true
               const insertedValue = change.insert
               const valueLength = insertedValue.length
@@ -30,7 +30,7 @@ const updateLiveCursor = (delta: any, selectionProperties: SelectionProperties[]
               updatedState[i] = {index: newIndex, length: selectionLength, bounds: newBounds, quillIndex, socketId: updatedState[i].socketId}
               setSelectionProperties(updatedState)
             }
-            if("delete" in change && retainValue && retainValue < selectionIndex){
+            if("delete" in change && retainValue && retainValue <= selectionIndex){
               isDelete = true
               const deletedLength = change.delete
               const newIndex = selectionIndex - deletedLength
