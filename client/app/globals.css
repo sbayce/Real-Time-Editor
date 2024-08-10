@@ -43,6 +43,9 @@ body {
   height: 20px;
   animation: blink 1s step-end infinite;
 }
+.hidden {
+  visibility: hidden;
+}
 @keyframes blink {
   from, to {
     opacity: 1;

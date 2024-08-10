@@ -23,18 +23,26 @@ const storeImage = async (img: any, queryClient: QueryClient, editorId: string) 
 const captureScreenshot = (queryClient: QueryClient, editorId: string) => {
     const ql = document.querySelector(".ql-container.ql-snow")
     if (!ql) return
-
+    // hide all cursors to not appear in screenshot
+    const cursors = ql.querySelectorAll(".cursor")
+    for(let i =0; i<cursors.length; i++){
+      cursors[i].classList.add("hidden")
+    }
     html2canvas(ql, {
       useCORS: true,
     })
       .then((canvas) => {
         storeImage(canvas.toDataURL(), queryClient, editorId)
+        // add cursors back
+        for(let i =0; i<cursors.length; i++){
+          cursors[i].classList.remove("hidden")
+        }
       })
       .catch((err) => console.error("Error capturing screenshot:", err))
   }
 
   const debounceScreenShot = debounce((queryClient, editorId) => {
     captureScreenshot(queryClient, editorId)
-  }, 3000)
+  }, 5000)
 
   export default debounceScreenShot
