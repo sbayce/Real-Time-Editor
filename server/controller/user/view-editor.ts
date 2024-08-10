@@ -10,6 +10,7 @@ const viewEditor = async (req: Request, res: Response) => {
     let editor
     let editorContent
     let restData
+    let collaborator
     const cachedEditor: any = await redisClient.json.get(`editor:${editorId}`)
     if(!cachedEditor){
       const editorExists = await postgres.query(
@@ -21,27 +22,23 @@ const viewEditor = async (req: Request, res: Response) => {
         return
       }
       editor = editorExists.rows[0]
-      console.log(editor)
-      const hasAccessPermission = checkAccessPermission(editor, userId)
-      if (!hasAccessPermission) {
-        // redisClient.json.arrAppend(`user:${userId}`, "$", {[editorId]: false})
-        res
-          .status(403)
-          .json({ message: "User is neither an owner nor a collaborator" })
+
+      collaborator = await postgres.query("SELECT * FROM collaborator_access WHERE (editor_id, collaborator_id) = ($1, $2)", [editorId, userId])
+      if(collaborator.rowCount === 0){
+        res.status(403).json({ message: "User is neither an owner nor a collaborator" })
         return
-    }
+      }
+
       redisClient.json.set(`editor:${editorId}`, "$", editor)
       redisClient.expire(`editor:${editorId}`, 1000)
     }else{
       editor = cachedEditor
-      const hasAccessPermission = checkAccessPermission(editor, userId)
-      if (!hasAccessPermission) {
-        // redisClient.json.arrAppend(`user:${userId}`, "$", {[editorId]: false})
-        res
-          .status(403)
-          .json({ message: "User is neither an owner nor a collaborator" })
+
+      collaborator = await postgres.query("SELECT * FROM collaborator_access WHERE (editor_id, collaborator_id) = ($1, $2)", [editorId, userId])
+      if(collaborator.rowCount === 0){
+        res.status(403).json({ message: "User is neither an owner nor a collaborator" })
         return
-    }
+      }
       const {content, ...rest} = cachedEditor
       console.log("cached: ", cachedEditor)
       editorContent = content
@@ -59,10 +56,10 @@ const viewEditor = async (req: Request, res: Response) => {
     */
     
     if(editorContent !== undefined){
-      res.status(201).json({ content: editorContent, ...restData, userEmail: userEmail, username: username })
+      res.status(201).json({ content: editorContent, ...restData, userEmail: userEmail, username: username, accessType: collaborator.rows[0].access_type })
       return
     }
-    res.status(201).json({ ...editor, userEmail: userEmail, username: username })
+    res.status(201).json({ ...editor, userEmail: userEmail, username: username, accessType: collaborator.rows[0].access_type })
   } catch (error) {
     console.log(error)
     res.status(500).json(error)

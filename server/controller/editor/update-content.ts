@@ -19,7 +19,7 @@ const updateContent = async (req: Request, res: Response) => {
     }
     const editor = editorExists.rows[0]
 
-    const hasAccessPermission = checkAccessPermission(editor, userId)
+    const hasAccessPermission = checkAccessPermission(editor, userId, postgres)
     if (!hasAccessPermission) {
       res
         .status(403)

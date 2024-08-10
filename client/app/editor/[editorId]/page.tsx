@@ -22,6 +22,7 @@ import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
+import AccessType from "@/app/types/access-type"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -324,7 +325,11 @@ const page = () => {
       const newQuill = initializeQuill(parent, id)
       setQuills((prev: any) => [...prev, newQuill])
       newQuill.setContents(content)
-      newQuill.enable()
+      if(editorData?.accessType === AccessType.Write){
+        newQuill.enable()
+      }else{
+        newQuill.disable()
+      }
     }
   }
   console.log(quills)
