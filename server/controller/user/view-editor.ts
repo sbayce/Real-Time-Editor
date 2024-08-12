@@ -7,59 +7,36 @@ const viewEditor = async (req: Request, res: Response) => {
     const { postgres } = req.context
     const userId = req.userId
     const editorId = req.params.editorId
-    let editor
-    let editorContent
-    let restData
-    let collaborator
-    const cachedEditor: any = await redisClient.json.get(`editor:${editorId}`)
-    if(!cachedEditor){
-      const editorExists = await postgres.query(
-        "SELECT * FROM editor WHERE id = $1",
-        [editorId]
-      )
-      if (editorExists.rowCount === 0) {
-        res.status(400).json("Editor does not exist")
-        return
-      }
-      editor = editorExists.rows[0]
 
-      collaborator = await postgres.query("SELECT * FROM collaborator_access WHERE (editor_id, collaborator_id) = ($1, $2)", [editorId, userId])
-      if(collaborator.rowCount === 0){
-        res.status(403).json({ message: "User is neither an owner nor a collaborator" })
-        return
-      }
+    const editorExists = await postgres.query(
+      "SELECT * FROM editor WHERE id = $1",
+      [editorId]
+    )
+    if (editorExists.rowCount === 0) {
+      res.status(400).json("Editor does not exist")
+      return
+    }
+    let editor = editorExists.rows[0]
 
-      redisClient.json.set(`editor:${editorId}`, "$", editor)
-      redisClient.expire(`editor:${editorId}`, 1000)
-    }else{
-      editor = cachedEditor
-
-      collaborator = await postgres.query("SELECT * FROM collaborator_access WHERE (editor_id, collaborator_id) = ($1, $2)", [editorId, userId])
-      if(collaborator.rowCount === 0){
-        res.status(403).json({ message: "User is neither an owner nor a collaborator" })
-        return
-      }
-      const {content, ...rest} = cachedEditor
-      console.log("cached: ", cachedEditor)
-      editorContent = content
-      restData = rest
+    let {rows: [foundUser]} = await postgres.query("SELECT * FROM user_access WHERE (editor_id, user_id) = ($1, $2)", [editorId, userId])
+    if(!foundUser){
+      res.status(403).json({ message: "User does not have access to this editor." })
+      return
     }
   
-    const user = await postgres.query("SELECT email, username FROM users WHERE id = $1", [
+    const {rows} = await postgres.query("SELECT email, username FROM users WHERE id = $1", [
       userId,
     ])
-    const userEmail = user.rows[0].email
-    const username = user.rows[0].username
+    const [user] = rows
+    const userEmail = user.email
+    const username = user.username
     /* content is stored as JSON in redis and as STRING in posgres
        So pass the content as STRING if it's coming from redis
        The frontend accepts content as STRING
     */
     
-    if(editorContent !== undefined){
-      res.status(201).json({ content: editorContent, ...restData, userEmail: userEmail, username: username, accessType: collaborator.rows[0].access_type })
-      return
-    }
-    res.status(201).json({ ...editor, userEmail: userEmail, username: username, accessType: collaborator.rows[0].access_type })
+    res.status(201).json({ ...editor, userEmail: userEmail, username: username, accessType: foundUser.access_type, isOwner: foundUser.isOwner })
+    console.log("found user: ", foundUser)
   } catch (error) {
     console.log(error)
     res.status(500).json(error)
