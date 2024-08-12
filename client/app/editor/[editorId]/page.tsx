@@ -143,13 +143,13 @@ const page = () => {
       modules: { toolbar: toolbarOptions, history: { userOnly: true } },
     })
     setWrapperElements((prev) => [...prev, editor])
-    if(id !== '0'){ // hide other toolbars
+    if(editorData?.accessType === AccessType.Read || id !== '0'){
       const toolbar = quillInstance.getModule("toolbar").container
       toolbar.style.visibility = "hidden"
     }
 
     return quillInstance
-  }, [])
+  }, [editorData])
 
   const removeQuill = (container: any, index: number) => {
     if (!socket || !quills) return
@@ -180,7 +180,7 @@ const page = () => {
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
   */
   useEffect(() => {
-    if (!quills || !socket || !parent) return
+    if (!quills || !socket || !parent || !editorData) return
     socket.off("recieve-changes")
     socket.off("recieve-selection")
     socket.off("replace-selection")
@@ -248,77 +248,79 @@ const page = () => {
       selectedQuill.formatText(oldRange.index, oldRange.length, currentFormat, "silent") //preserve text formatting
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
     })
-    quills.map((q, index) => {
-      q.off("text-change")
-      q.off("selection-change")
+    if(editorData.accessType === AccessType.Write){
+      quills.map((q, index) => {
+        q.off("text-change")
+        q.off("selection-change")
 
-      q.on("text-change", (delta: Delta, oldDelta, source) => {
-        if (source !== "user") return
-        throttledKeyPress(delta, q, index, socket)
-        if (index === 0) {
-          debounceScreenShot(queryClient, editorId)
-        }
-        // check if new content increased page size beyond threshold
-        const shouldRevertChanges = checkPageSize(q, index)
-        if(shouldRevertChanges){
-          //should cancel the changes and add a new page
-          q.updateContents(delta.invert(oldDelta))
-          if (quills[index + 1]) { //switch to page below if it exists
-            setTimeout(() => {
-              q.blur()
-              quills[index + 1].focus()
-            }, 0.1)
-          } else {
-            handleCreateQuill()
+        q.on("text-change", (delta: Delta, oldDelta, source) => {
+          if (source !== "user") return
+          throttledKeyPress(delta, q, index, socket)
+          if (index === 0) {
+            debounceScreenShot(queryClient, editorId)
           }
-        }
+          // check if new content increased page size beyond threshold
+          const shouldRevertChanges = checkPageSize(q, index)
+          if(shouldRevertChanges){
+            //should cancel the changes and add a new page
+            q.updateContents(delta.invert(oldDelta))
+            if (quills[index + 1]) { //switch to page below if it exists
+              setTimeout(() => {
+                q.blur()
+                quills[index + 1].focus()
+              }, 0.1)
+            } else {
+              handleCreateQuill()
+            }
+          }
 
-        updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
-      })
-      q.on("selection-change", (range, oldRange, source) => {
-        if (source !== "user" || (!range && !oldRange)) return
-        if (range) {
-          console.log("range: ", range)
-          const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
-          for (let i = 0; i < toolbars.length; i++) {
-            toolbars[i].style.visibility = "hidden"
+          updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
+        })
+        q.on("selection-change", (range, oldRange, source) => {
+          if (source !== "user" || (!range && !oldRange)) return
+          if (range) {
+            console.log("range: ", range)
+            const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
+            for (let i = 0; i < toolbars.length; i++) {
+              toolbars[i].style.visibility = "hidden"
+            }
+            const toolbar: HTMLDivElement = q.getModule("toolbar").container
+            toolbar.style.visibility = "visible"
           }
-          const toolbar: HTMLDivElement = q.getModule("toolbar").container
-          toolbar.style.visibility = "visible"
-        }
-        if (!range && oldRange && oldRange.length !== 0) {
-          // console.log("remove selection by focus: ", {oldRange})
-          socket.emit("remove-selection", { oldRange, index })
-        } else if (range) {
-          const selectionLength = range.length
-          const selectionIndex = range.index
-          if (selectionLength > 0 && (!oldRange || oldRange.length === 0)) {
-            console.log("selection: ")
-            socket.emit("selection-change", {
-              selectionIndex,
-              selectionLength,
-              index,
-            })
-          } else if (selectionLength > 0 && oldRange && oldRange.length > 0) {
-            socket.emit("replace-selection", {
-              selectionIndex,
-              selectionLength,
-              oldRange,
-              index,
-            })
-          } else if (selectionLength === 0 && oldRange && oldRange.length > 0) {
-            socket.emit("remove-selection", { selectionIndex, selectionLength, oldRange, index })
-          } else if (
-            selectionLength === 0 &&
-            oldRange &&
-            oldRange.length === 0
-          ) {
-            socket.emit("cursor-update", {selectionIndex, selectionLength, index})
+          if (!range && oldRange && oldRange.length !== 0) {
+            // console.log("remove selection by focus: ", {oldRange})
+            socket.emit("remove-selection", { oldRange, index })
+          } else if (range) {
+            const selectionLength = range.length
+            const selectionIndex = range.index
+            if (selectionLength > 0 && (!oldRange || oldRange.length === 0)) {
+              console.log("selection: ")
+              socket.emit("selection-change", {
+                selectionIndex,
+                selectionLength,
+                index,
+              })
+            } else if (selectionLength > 0 && oldRange && oldRange.length > 0) {
+              socket.emit("replace-selection", {
+                selectionIndex,
+                selectionLength,
+                oldRange,
+                index,
+              })
+            } else if (selectionLength === 0 && oldRange && oldRange.length > 0) {
+              socket.emit("remove-selection", { selectionIndex, selectionLength, oldRange, index })
+            } else if (
+              selectionLength === 0 &&
+              oldRange &&
+              oldRange.length === 0
+            ) {
+              socket.emit("cursor-update", {selectionIndex, selectionLength, index})
+            }
           }
-        }
+        })
       })
-    })
-  }, [quills, socket, onlineUsers, selectionProperties, parent])
+    }
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills && socket) {
