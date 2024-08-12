@@ -21,6 +21,7 @@ type SocketData = {
 
 const roomMap = new Map<string, Map<string, SocketData>>()
 const socketMap = new Map<string, SocketData>()
+let masterSocket: string | undefined
 
 function logRoomMap(roomMap: Map<string, Map<string, SocketData>>): void {
   roomMap.forEach((innerMap, room) => {
@@ -38,8 +39,11 @@ io.on("connection", (socket) => {
   const username = socket.handshake.auth.username
   const socketId = socket.id
   let currentRoomMap = roomMap.get(roomId)
+  console.log("current room: ", currentRoomMap)
+  console.log("master: ", masterSocket)
   if (!currentRoomMap) {
-    var newRoomMap = new Map<string, SocketData>()
+    masterSocket = socket.id
+    let newRoomMap = new Map<string, SocketData>()
     newRoomMap.set(socketId, {
       email: userEmail,
       username: username,
@@ -47,7 +51,7 @@ io.on("connection", (socket) => {
     })
     roomMap.set(roomId, newRoomMap)
   } else {
-    currentRoomMap?.set(socketId, {
+    currentRoomMap.set(socketId, {
       email: userEmail,
       username: username,
       color: "#" + Math.floor(Math.random() * 16777215).toString(16),
@@ -86,7 +90,8 @@ io.on("connection", (socket) => {
     console.log("index is: ", index)
 
     // index represents page. Set content of a certain page
-    redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
+
+    // redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
     socket.broadcast.to(roomId).emit("recieve-changes", { delta, index })
   })
 
@@ -96,7 +101,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on("remove-page", (index) => {
-    redisClient.json.del(`editor:${roomId}`, `$.content.${index}`) // remove page from redis
+    // redisClient.json.del(`editor:${roomId}`, `$.content.${index}`) // remove page from redis
     socket.broadcast.to(roomId).emit("page-to-remove", index)
   })
 
@@ -146,16 +151,27 @@ io.on("connection", (socket) => {
       title,
       roomId,
     ])
-    redisClient.json.set(`editor:${roomId}`, `$.title`, title)
+    // redisClient.json.set(`editor:${roomId}`, `$.title`, title)
     socket.broadcast.to(roomId).emit("recieve_title", title)
   })
 
   socket.on("disconnect", async () => {
     console.log("socket id: " + socketId + " disconnected.")
     console.log(roomId)
-    var currentRoomMap = roomMap.get(roomId)
+    console.log("aloo: ", roomMap)
+    let currentRoomMap = roomMap.get(roomId)
     if (currentRoomMap) {
       currentRoomMap.delete(socketId)
+      console.log("after leaving: ", roomMap)
+      if(socket.id === masterSocket){
+        const newMasterSocket = currentRoomMap.entries().next().value
+        if(newMasterSocket){
+          masterSocket = newMasterSocket[0]
+          console.log("new master socket: ", masterSocket)
+        }else{
+          masterSocket = undefined
+        }
+      }
       if (currentRoomMap.size === 0) {
         let updatedContent: any = await redisClient.json.get(
           `editor:${roomId}`,
