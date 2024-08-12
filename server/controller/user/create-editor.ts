@@ -9,15 +9,7 @@ const createEditor = async (req: Request, res: Response) => {
       [userId]
     )
     const editorId = editor.rows[0].id
-    // Prepare the new JSON object to append
-    const newWorkspaceEntry = JSON.stringify([
-      { editor_id: editorId, role: "owner" },
-    ])
-    // Update the user's workspace
-    await postgres.query(
-      "UPDATE users SET workspace = workspace || $1::jsonb WHERE id = $2",
-      [newWorkspaceEntry, userId]
-    )
+    await postgres.query("INSERT INTO user_access (editor_id, user_id, access_type, isOwner) VALUES ($1, $2, $3, $4)", [editorId, userId, "write", true])
     res.status(201).json(editor.rows[0])
   } catch (error: any) {
     res.status(500).json(error.message)
