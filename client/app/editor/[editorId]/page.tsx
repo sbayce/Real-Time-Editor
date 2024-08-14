@@ -23,6 +23,7 @@ import debounceScreenShot from "@/utils/editor/debounce-screenshot"
 import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
+import getEditorContent from "@/utils/editor/get-editor-content"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -70,7 +71,7 @@ const page = () => {
   }, [])
 
   useEffect(() => {
-    if (!editorData) return
+    if (!editorData || !parent) return
 
     const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL}`, {
       auth: {
@@ -80,19 +81,44 @@ const page = () => {
       },
     })
     setSocket(socket)
-    setTitle(editorData?.title)
+    socket.on("recieve-master", (content) => {
+      console.log("recieved from master: ", content)
+      if(content){
+        console.log("Loaded from Master")
+        setQuills([])
+        if(content.length === 0){
+          handleCreateQuill()
+        }
+        for (let i =0; i< content.length; i++) {
+          loadQuill(String(i), content[i])
+        }
+      }else{
+        console.log("Loaded from DB")
+        if(Object.entries(editorData.content).length === 0){
+          handleCreateQuill()
+        }
+        for (const [key, value] of Object.entries(editorData.content)) {
+          loadQuill(key, value)
+        }
+      }
+    })
+    socket.emit("request-latest")
+    setTitle(editorData.title)
     console.log(editorData)
-  }, [editorData])
+    return () => {
+      socket.off("recieve-master")
+    }
+  }, [editorData, parent])
 
-  useEffect(() => {
-    if (!socket || !parent || !editorData) return
-    if(Object.entries(editorData.content).length === 0){
-      handleCreateQuill()
-    }
-    for (const [key, value] of Object.entries(editorData.content)) {
-      loadQuill(key, value)
-    }
-  }, [socket, parent, editorData])
+  // useEffect(() => {
+  //   if (!socket || !parent || !editorData) return
+  //   if(Object.entries(editorData.content).length === 0){
+  //     handleCreateQuill()
+  //   }
+  //   for (const [key, value] of Object.entries(editorData.content)) {
+  //     loadQuill(key, value)
+  //   }
+  // }, [socket, parent, editorData])
 
   useEffect(() => {
     if (!socket) return
@@ -134,6 +160,7 @@ const page = () => {
   console.log("socket: ", socket)
 
   const initializeQuill = useCallback((container: any, id: string) => {
+    document.getElementById(`quill-${id}`)?.remove()
     const editor = document.createElement("div")
     editor.style.border = "none"
     editor.id = `quill-${id}`
@@ -176,17 +203,40 @@ const page = () => {
     }
   }
 
+  useEffect(() => {
+    if(!socket || quills.length === 0) return
+    const interval = setInterval(() => {
+      const content = getEditorContent(quills)
+      socket.emit("save-editor", content)
+    }, 60000)
+    return () => {
+      clearInterval(interval)
+    }
+  }, [socket, quills])
+
   /* This useEffect updates all the editors (quills) event listeners when new editors are added
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
   */
   useEffect(() => {
-    if (!quills || !socket || !parent || !editorData) return
-    socket.off("recieve-changes")
-    socket.off("recieve-selection")
-    socket.off("replace-selection")
-    socket.off("remove-selection")
-    socket.off("recieve-cursor")
-    socket.off("page-to-remove")
+    if (!quills || !socket || !parent || !editorData || !onlineUsers) return
+    
+    socket.on("master-request", (requestingSocket) => {
+      console.log("master request here.")
+      const content = quills.map((quill) => {
+        return quill.getContents()
+      })
+      socket.emit("send-master-content", {content, requestingSocket})
+    })
+    // socket.on("recieve-master", (content) => {
+    //   console.log("recieved from master: ", content)
+    //   setQuills([])
+    //   if(content.length === 0){
+    //     handleCreateQuill()
+    //   }
+    //   for (let i =0; i< content.length; i++) {
+    //     loadQuill(String(i), content[i])
+    //   }
+    // })
 
     socket.on("page-to-remove", (index) => {
       if (!quills[index - 1]) return
@@ -320,10 +370,20 @@ const page = () => {
         })
       })
     }
+    return () => {
+      socket.off("recieve-changes")
+      socket.off("recieve-selection")
+      socket.off("replace-selection")
+      socket.off("remove-selection")
+      socket.off("recieve-cursor")
+      socket.off("page-to-remove")
+      socket.off("master-request")
+      socket.off("recieve-master")
+    }
   }, [quills, socket, onlineUsers, selectionProperties, parent, editorData])
 
   const loadQuill = (id: string, content: any) => {
-    if (parent && quills && socket) {
+    if (parent && quills) {
       const newQuill = initializeQuill(parent, id)
       setQuills((prev: any) => [...prev, newQuill])
       newQuill.setContents(content)

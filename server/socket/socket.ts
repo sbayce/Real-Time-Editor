@@ -23,15 +23,6 @@ const roomMap = new Map<string, Map<string, SocketData>>()
 const socketMap = new Map<string, SocketData>()
 let masterSocket: string | undefined
 
-function logRoomMap(roomMap: Map<string, Map<string, SocketData>>): void {
-  roomMap.forEach((innerMap, room) => {
-    console.log(`Room: ${room}`)
-    innerMap.forEach((user, socket) => {
-      console.log(`  User: ${user}, Socket: ${socket}`)
-    })
-  })
-}
-
 io.on("connection", (socket) => {
   console.log("new socket: " + socket.id)
   const roomId = socket.handshake.auth.roomId
@@ -39,8 +30,8 @@ io.on("connection", (socket) => {
   const username = socket.handshake.auth.username
   const socketId = socket.id
   let currentRoomMap = roomMap.get(roomId)
-  console.log("current room: ", currentRoomMap)
-  console.log("master: ", masterSocket)
+  console.log("current rooms: ", roomMap)
+  // if current room exist -> create room and set Master socket (first to join)
   if (!currentRoomMap) {
     masterSocket = socket.id
     let newRoomMap = new Map<string, SocketData>()
@@ -58,17 +49,14 @@ io.on("connection", (socket) => {
     })
     roomMap.set(roomId, currentRoomMap)
   }
-  // socketMap.set(socketId, userEmail)
-  // roomMap.set(roomId, socketMap)
+  console.log("master: ", masterSocket)
   socket.join(roomId)
   console.log("socket: " + socketId + " joined room: " + roomId)
-  logRoomMap(roomMap)
+  console.log(roomMap)
 
   // get online users from a specific room
   const userMap = roomMap.get(roomId)
   if (userMap) {
-    const data = Array.from(userMap.entries())
-    console.log("data: ", data)
     let onlineUsers: any = []
     Array.from(userMap.entries()).forEach(([key, value]) => {
       onlineUsers.push({
@@ -82,11 +70,27 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("online_users", onlineUsers)
   }
 
+  socket.on("save-editor", async (content) => {
+    console.log("save request from:", socket.id)
+    await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+      content,
+      roomId,
+    ])
+  })
+
+  socket.on("request-latest", () => {
+    if(masterSocket && socket.id !== masterSocket){
+      io.to(masterSocket).emit("master-request", socket.id)
+    }else if(!masterSocket || (masterSocket && masterSocket === socket.id)){
+      io.to(socket.id).emit("recieve-master", false)
+    }
+  })
+
+  socket.on("send-master-content", ({content, requestingSocket}) => {
+    io.to(requestingSocket).emit("recieve-master", content)
+  })
+
   socket.on("send-changes", async ({ delta, content, index }) => {
-    // await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
-    //   content,
-    //   roomId,
-    // ])
     console.log("index is: ", index)
 
     // index represents page. Set content of a certain page
@@ -156,9 +160,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on("disconnect", async () => {
-    console.log("socket id: " + socketId + " disconnected.")
-    console.log(roomId)
-    console.log("aloo: ", roomMap)
+    console.log("socket id:", socketId, "disconnected from room", roomId)
     let currentRoomMap = roomMap.get(roomId)
     if (currentRoomMap) {
       currentRoomMap.delete(socketId)
@@ -196,9 +198,7 @@ io.on("connection", (socket) => {
         roomMap.set(roomId, currentRoomMap)
       }
     }
-    // socketMap.delete(socketId)
-    // roomMap.set(roomId, socketMap)
-    logRoomMap(roomMap)
+    console.log("final rooms: ", roomMap)
     const userMap = roomMap.get(roomId)
     if (userMap) {
       const userEmails = Array.from(userMap.values())
