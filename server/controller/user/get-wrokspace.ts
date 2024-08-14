@@ -19,8 +19,6 @@ const getWorkspace = async (req: Request, res: Response) => {
     rows.map((item: any) => {
       if(item.isowner === false) collaboratedEditorIds.push(item.editor_id)
     })
-    console.log("owned: ", ownedEditorsIds)
-    console.log("collabs: ", collaboratedEditorIds)
     // Query the editor table for these editor_ids
     const ownedEditors = await postgres.query(
       "SELECT id, title, created_at, updated_at, snap_shot FROM editor WHERE id = ANY($1::int[])",
