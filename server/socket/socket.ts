@@ -165,10 +165,12 @@ io.on("connection", (socket) => {
     if (currentRoomMap) {
       currentRoomMap.delete(socketId)
       console.log("after leaving: ", roomMap)
+      // if master socket leaves -> assign to any existing socket
       if(socket.id === masterSocket){
-        const newMasterSocket = currentRoomMap.entries().next().value
-        if(newMasterSocket){
-          masterSocket = newMasterSocket[0]
+        const newMasterSocket = [...currentRoomMap.entries()]
+        console.log("error: ", newMasterSocket)
+        if(newMasterSocket.length !== 0){
+          masterSocket = newMasterSocket[0][0]
           console.log("new master socket: ", masterSocket)
         }else{
           masterSocket = undefined
