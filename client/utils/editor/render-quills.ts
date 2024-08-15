@@ -1,7 +1,9 @@
+import { Socket } from "socket.io-client"
 
-const renderQuills = (content: any, handleCreateQuill: Function, loadQuill: Function) => {
+const renderQuills = (content: any, handleCreateQuill: Function, loadQuill: Function, socket: Socket) => {
     if(Object.entries(content).length === 0){
-        handleCreateQuill()
+        console.log("will create quill..")
+        handleCreateQuill(socket)
     }
     for (const [key, value] of Object.entries(content)) {
         loadQuill(key, value)

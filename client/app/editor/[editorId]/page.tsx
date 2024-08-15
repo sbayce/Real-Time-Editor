@@ -86,10 +86,10 @@ const page = () => {
       console.log("recieved from master: ", content)
       if(content){
         console.log("Loaded from Master")
-        renderQuills(content, handleCreateQuill, loadQuill)
+        renderQuills(content, handleCreateQuill, loadQuill, socket)
       }else{
         console.log("Loaded from DB")
-        renderQuills(editorData.content, handleCreateQuill, loadQuill)
+        renderQuills(editorData.content, handleCreateQuill, loadQuill, socket)
       }
     })
     socket.emit("request-latest")
@@ -183,7 +183,8 @@ const page = () => {
     setParent(wrapper)
   }, [])
 
-  const handleCreateQuill = () => {
+  const handleCreateQuill = (socket?: Socket) => {
+    console.log("in HCQ: ", parent, quills, socket)
     if (parent && quills && socket) {
       const index = quills.length
       console.log("quill length: ", index)
