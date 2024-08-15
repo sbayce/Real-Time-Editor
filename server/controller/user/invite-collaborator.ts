@@ -1,5 +1,4 @@
 import { Request, Response } from "express"
-import addCollaboratorToRedis from "../../lib/editor/add-collaborator-to-redis"
 
 const inviteCollaborator = async (req: Request, res: Response) => {
   try {

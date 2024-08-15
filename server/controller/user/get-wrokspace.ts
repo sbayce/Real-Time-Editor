@@ -4,10 +4,7 @@ const getWorkspace = async (req: Request, res: Response) => {
   try {
     const { postgres } = req.context
     const userId = req.userId
-    const workspaceResult = await postgres.query(
-      "SELECT workspace FROM users WHERE id = $1",
-      [userId]
-    )
+
     const {rows} = await postgres.query("SELECT editor_id, isOwner FROM user_access WHERE user_id = $1", [userId])
 
     // Extract editor_ids

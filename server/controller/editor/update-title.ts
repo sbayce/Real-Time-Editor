@@ -1,5 +1,4 @@
 import { Request, Response } from "express"
-import checkAccessPermission from "../../lib/editor/check-access-permission"
 
 const updateTitle = async (req: Request, res: Response) => {
   try {
@@ -16,13 +15,10 @@ const updateTitle = async (req: Request, res: Response) => {
       res.status(400).json("Editor does not exist")
       return
     }
-    const editor = editorExists.rows[0]
 
-    const hasAccessPermission = checkAccessPermission(editor, userId, postgres)
-    if (!hasAccessPermission) {
-      res
-        .status(403)
-        .json({ message: "User is neither an owner nor a collaborator" })
+    const hasAccess = await postgres.query("SELECT * FROM user_access WHERE user_id = $1 AND editor_id = $2", [userId, editorId])
+    if(hasAccess.rowCount !== 1){
+      res.status(403).json({ message: "User is neither an owner nor a collaborator" })
       return
     }
     const updatedEditor = await postgres.query(
