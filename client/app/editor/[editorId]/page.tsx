@@ -24,6 +24,7 @@ import toolbarOptions from "@/app/lib/editor/quil-toolbar"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
+import renderQuills from "@/utils/editor/render-quills"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -85,21 +86,10 @@ const page = () => {
       console.log("recieved from master: ", content)
       if(content){
         console.log("Loaded from Master")
-        setQuills([])
-        if(content.length === 0){
-          handleCreateQuill()
-        }
-        for (let i =0; i< content.length; i++) {
-          loadQuill(String(i), content[i])
-        }
+        renderQuills(content, handleCreateQuill, loadQuill)
       }else{
         console.log("Loaded from DB")
-        if(Object.entries(editorData.content).length === 0){
-          handleCreateQuill()
-        }
-        for (const [key, value] of Object.entries(editorData.content)) {
-          loadQuill(key, value)
-        }
+        renderQuills(editorData.content, handleCreateQuill, loadQuill)
       }
     })
     socket.emit("request-latest")
@@ -222,21 +212,9 @@ const page = () => {
     
     socket.on("master-request", (requestingSocket) => {
       console.log("master request here.")
-      const content = quills.map((quill) => {
-        return quill.getContents()
-      })
+      const content = getEditorContent(quills)
       socket.emit("send-master-content", {content, requestingSocket})
     })
-    // socket.on("recieve-master", (content) => {
-    //   console.log("recieved from master: ", content)
-    //   setQuills([])
-    //   if(content.length === 0){
-    //     handleCreateQuill()
-    //   }
-    //   for (let i =0; i< content.length; i++) {
-    //     loadQuill(String(i), content[i])
-    //   }
-    // })
 
     socket.on("page-to-remove", (index) => {
       if (!quills[index - 1]) return
@@ -378,7 +356,6 @@ const page = () => {
       socket.off("recieve-cursor")
       socket.off("page-to-remove")
       socket.off("master-request")
-      socket.off("recieve-master")
     }
   }, [quills, socket, onlineUsers, selectionProperties, parent, editorData])
 
