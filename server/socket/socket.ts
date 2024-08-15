@@ -72,8 +72,9 @@ io.on("connection", (socket) => {
 
   socket.on("save-editor", async (content) => {
     console.log("save request from:", socket.id)
-    await pool.query("UPDATE editor SET content = $1 WHERE id = $2", [
+    await pool.query("UPDATE editor SET content = $1, updated_at = $2 WHERE id = $3", [
       content,
+      new Date(),
       roomId,
     ])
   })
@@ -168,7 +169,6 @@ io.on("connection", (socket) => {
       // if master socket leaves -> assign to any existing socket
       if(socket.id === masterSocket){
         const newMasterSocket = [...currentRoomMap.entries()]
-        console.log("error: ", newMasterSocket)
         if(newMasterSocket.length !== 0){
           masterSocket = newMasterSocket[0][0]
           console.log("new master socket: ", masterSocket)
