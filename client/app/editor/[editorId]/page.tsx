@@ -33,6 +33,13 @@ Font.whitelist = fontWhitelist
 Quill.register(Font, true)
 Quill.register(Size, true)
 
+const handlePageExit = (e: any, socket: Socket, quills: Quill[]) => {
+  e.preventDefault()
+  e.returnValue = true
+  const content = getEditorContent(quills)
+  socket.emit("save-editor", content)
+}
+
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null>(null)
   const [title, setTitle] = useState(editorData?.title)
@@ -128,6 +135,7 @@ const page = () => {
 
     return () => {
       if (socket) {
+        console.log("socket disconnecting...")
         socket.disconnect()
       }
     }
@@ -210,6 +218,10 @@ const page = () => {
   */
   useEffect(() => {
     if (!quills || !socket || !parent || !editorData || !onlineUsers) return
+
+    const handleBeforeUnload = (e: any) => handlePageExit(e, socket, quills);
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
     
     socket.on("master-request", (requestingSocket) => {
       console.log("master request here.")
@@ -357,6 +369,7 @@ const page = () => {
       socket.off("recieve-cursor")
       socket.off("page-to-remove")
       socket.off("master-request")
+      window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   }, [quills, socket, onlineUsers, selectionProperties, parent, editorData])
 
