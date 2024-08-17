@@ -91,13 +91,14 @@ io.on("connection", (socket) => {
     io.to(requestingSocket).emit("recieve-master", content)
   })
 
-  socket.on("send-changes", async ({ delta, content, index }) => {
+  socket.on("send-changes", async ({ delta, oldDelta, index }) => {
     console.log("index is: ", index)
+    console.log("old is: ", oldDelta)
 
     // index represents page. Set content of a certain page
 
     // redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
-    socket.broadcast.to(roomId).emit("recieve-changes", { delta, index })
+    socket.broadcast.to(roomId).emit("recieve-changes", { delta, index, oldDelta })
   })
 
   // listen to new pages added

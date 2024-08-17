@@ -25,6 +25,7 @@ import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
 import renderQuills from "@/utils/editor/render-quills"
+import isEqual from 'lodash.isequal'
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -54,6 +55,7 @@ const page = () => {
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [previousDeltas, setPreviousDeltas] = useState<Delta[]>([])
   const queryClient = useQueryClient()
   // console.log("data: ", editorData)
 
@@ -250,11 +252,31 @@ const page = () => {
       quills[index - 1].focus()
     })
 
-    socket.on("recieve-changes", ({ delta, index }) => {
+    socket.on("recieve-changes", ({ delta, index, oldDelta }: {delta: Delta, index: number, oldDelta: Delta}) => {
       console.log("delta: ", delta.ops)
       console.log("index: ", index)
       const selectedQuill = quills[index]
-      selectedQuill.updateContents(delta)
+      // create plain objects and remove prototypes (to check for equality of objects' structure)
+      const senderContent = JSON.parse(JSON.stringify(oldDelta))
+      const currentContent = JSON.parse(JSON.stringify(selectedQuill.getContents()))
+      console.log("sender old: ", senderContent)
+      console.log("current cont: ", currentContent)
+
+      if(isEqual(senderContent, currentContent)){
+        console.log("without conflicts")
+        selectedQuill.updateContents(delta)
+      }else{ 
+        // should handle conflicts
+        console.log(previousDeltas)
+        const transformed: any = previousDeltas[index].transform(delta, true)
+        console.log("transformed: ", transformed)
+        selectedQuill.updateContents(transformed)
+        setPreviousDeltas((prevState) => {
+        const newState = [...prevState]
+        newState[index] = transformed
+        return newState
+      })
+      }
 
       updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
     })
@@ -306,13 +328,18 @@ const page = () => {
         q.off("text-change")
         q.off("selection-change")
 
-        q.on("text-change", (delta: Delta, oldDelta, source) => {
+        q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
-          throttledKeyPress(delta, q, index, socket)
+          throttledKeyPress(delta, q, index, socket, oldDelta)
           if (index === 0) {
             debounceScreenShot(queryClient, editorId)
           }
           setIsChanged(true)
+          setPreviousDeltas((prevState) => {
+            const newState = [...prevState]
+            newState[index] = delta
+            return newState
+          })
           // check if new content increased page size beyond threshold
           const shouldRevertChanges = checkPageSize(q, index)
           if(shouldRevertChanges){
@@ -384,7 +411,7 @@ const page = () => {
       socket.off("master-request")
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged])
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills) {
@@ -399,7 +426,6 @@ const page = () => {
     }
   }
   console.log(quills)
-  console.log(isChanged)
   // console.log("selection Properties: ", selectionProperties)
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {

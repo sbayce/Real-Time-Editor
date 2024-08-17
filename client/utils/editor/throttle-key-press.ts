@@ -6,7 +6,7 @@ const throttle = (mainFunction: Function, delay: number) => {
     let timerFlag: any
     let deltas: Delta[] = []
   
-    return (delta: Delta, quill: Quill, index: number, socket: Socket) => {
+    return (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta) => {
       if(!socket) return
       if(timerFlag){
         deltas.push(delta)
@@ -20,8 +20,8 @@ const throttle = (mainFunction: Function, delay: number) => {
             parentDelta = parentDelta.compose(deltas[i])
           }
           console.log("composed delta: ", parentDelta)
-          const content = quill.getContents()
-          socket.emit("send-changes", { delta: parentDelta, content, index })
+          console.log("old delta: ", oldDelta)
+          socket.emit("send-changes", { delta: parentDelta, oldDelta, index })
           deltas = []
         }
         timerFlag = null; 
@@ -29,6 +29,6 @@ const throttle = (mainFunction: Function, delay: number) => {
     };
   }
 
-  const throttledKeyPress = throttle(() => {}, 700)
+  const throttledKeyPress = throttle(() => {}, 3000)
 
   export default throttledKeyPress
