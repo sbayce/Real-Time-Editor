@@ -33,11 +33,13 @@ Font.whitelist = fontWhitelist
 Quill.register(Font, true)
 Quill.register(Size, true)
 
-const handlePageExit = (e: any, socket: Socket, quills: Quill[]) => {
-  e.preventDefault()
-  e.returnValue = true
-  const content = getEditorContent(quills)
-  socket.emit("save-editor", content)
+const handlePageExit = (e: any, socket: Socket, quills: Quill[], isChanged: boolean) => {
+  if(isChanged){
+    e.preventDefault()
+    e.returnValue = true
+    const content = getEditorContent(quills)
+    socket.emit("save-editor", content)
+  }
 }
 
 const page = () => {
@@ -50,10 +52,12 @@ const page = () => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [parent, setParent] = useState()
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
+  const [isChanged, setIsChanged] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const queryClient = useQueryClient()
-  console.log("data: ", editorData)
+  // console.log("data: ", editorData)
 
-  console.log(onlineUsers)
+  // console.log(onlineUsers)
   const viewEditor = async () => {
     try {
       const res = await axios.get(
@@ -101,7 +105,7 @@ const page = () => {
     })
     socket.emit("request-latest")
     setTitle(editorData.title)
-    console.log(editorData)
+    // console.log(editorData)
     return () => {
       socket.off("recieve-master")
     }
@@ -205,13 +209,21 @@ const page = () => {
   useEffect(() => {
     if(!socket || quills.length === 0) return
     const interval = setInterval(() => {
-      const content = getEditorContent(quills)
-      socket.emit("save-editor", content)
-    }, 60000)
+      if(isChanged){
+        setIsSaving(true)
+        const content = getEditorContent(quills)
+        socket.emit("save-editor", content)
+        setIsChanged(false)
+        setTimeout(() => {
+          setIsSaving(false)
+        }, 2000)
+      }
+    }, 2000)
     return () => {
+      console.log("re-render")
       clearInterval(interval)
     }
-  }, [socket, quills])
+  }, [socket, quills, isChanged])
 
   /* This useEffect updates all the editors (quills) event listeners when new editors are added
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
@@ -219,7 +231,7 @@ const page = () => {
   useEffect(() => {
     if (!quills || !socket || !parent || !editorData || !onlineUsers) return
 
-    const handleBeforeUnload = (e: any) => handlePageExit(e, socket, quills);
+    const handleBeforeUnload = (e: any) => handlePageExit(e, socket, quills, isChanged);
 
     window.addEventListener("beforeunload", handleBeforeUnload)
     
@@ -300,6 +312,7 @@ const page = () => {
           if (index === 0) {
             debounceScreenShot(queryClient, editorId)
           }
+          setIsChanged(true)
           // check if new content increased page size beyond threshold
           const shouldRevertChanges = checkPageSize(q, index)
           if(shouldRevertChanges){
@@ -371,7 +384,7 @@ const page = () => {
       socket.off("master-request")
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData])
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills) {
@@ -386,6 +399,7 @@ const page = () => {
     }
   }
   console.log(quills)
+  console.log(isChanged)
   // console.log("selection Properties: ", selectionProperties)
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {
@@ -419,6 +433,7 @@ const page = () => {
       {editorData ? (
         <div className="py-2">
           <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">
+          {isSaving && <p>Saving...</p>}
             <form
               onSubmit={onTitleSubmit}
               className="self-start flex justify-between left-2 fixed"
