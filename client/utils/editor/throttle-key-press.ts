@@ -6,7 +6,7 @@ const throttle = (mainFunction: Function, delay: number) => {
     let timerFlag: any
     let deltas: Delta[] = []
   
-    return (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta) => {
+    return (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setPreviousDeltas: any, setAreChangesSent: any) => {
       if(!socket) return
       if(timerFlag){
         deltas.push(delta)
@@ -22,6 +22,12 @@ const throttle = (mainFunction: Function, delay: number) => {
           console.log("composed delta: ", parentDelta)
           console.log("old delta: ", oldDelta)
           socket.emit("send-changes", { delta: parentDelta, oldDelta, index })
+          setAreChangesSent(true)
+          // setPreviousDeltas((prevState: Delta[]) => {
+          //   const newState = [...prevState]
+          //   newState.splice(index, 1)
+          //   return newState
+          // })
           deltas = []
         }
         timerFlag = null; 

@@ -56,6 +56,7 @@ const page = () => {
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [previousDeltas, setPreviousDeltas] = useState<Delta[]>([])
+  const [areChangesSent, setAreChangesSent] = useState(false)
   const queryClient = useQueryClient()
   // console.log("data: ", editorData)
 
@@ -149,17 +150,17 @@ const page = () => {
 
   console.log(socket)
 
-  useEffect(() => {
-    if(!selectionProperties || wrapperElements.length === 0) return
-    console.log("wrapperElements: ", wrapperElements)
-    const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
-    return () => {
-      divs.forEach(({ div, ql }) => {
-        ql.removeChild(div);
-      });
-    };
+  // useEffect(() => {
+  //   if(!selectionProperties || wrapperElements.length === 0) return
+  //   console.log("wrapperElements: ", wrapperElements)
+  //   const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
+  //   return () => {
+  //     divs.forEach(({ div, ql }) => {
+  //       ql.removeChild(div);
+  //     });
+  //   };
 
-  }, [socket, onlineUsers, selectionProperties, wrapperElements])
+  // }, [socket, onlineUsers, selectionProperties, wrapperElements])
 
   console.log("socket: ", socket)
 
@@ -265,15 +266,27 @@ const page = () => {
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
         selectedQuill.updateContents(delta)
+        setPreviousDeltas((prevState) => {
+          console.log("prevState: ", prevState)
+          const newState = [...prevState]
+          newState.splice(index, 1)
+          console.log("afterState: ", newState)
+          return newState
+        })
       }else{ 
         // should handle conflicts
         console.log(previousDeltas)
-        const transformed: any = previousDeltas[index].transform(delta, true)
+        let transformed: any
+        if(areChangesSent){
+          transformed = previousDeltas[index]?.transform(delta, true)
+        }else{
+          transformed = previousDeltas[index]?.transform(delta, false)
+        }
         console.log("transformed: ", transformed)
         selectedQuill.updateContents(transformed)
         setPreviousDeltas((prevState) => {
         const newState = [...prevState]
-        newState[index] = transformed
+        newState.splice(index, 1)
         return newState
       })
       }
@@ -330,16 +343,29 @@ const page = () => {
 
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
-          throttledKeyPress(delta, q, index, socket, oldDelta)
+          throttledKeyPress(delta, q, index, socket, oldDelta, setPreviousDeltas, setAreChangesSent)
           if (index === 0) {
             debounceScreenShot(queryClient, editorId)
           }
+          if(areChangesSent){
+            setPreviousDeltas((prevState) => {
+              const newState = [...prevState]
+              newState[index] = delta
+              return newState
+            })
+            setAreChangesSent(false)
+          }else{
+            setPreviousDeltas((prevState) => {
+              const newState = [...prevState]
+              if(newState[index]){
+                newState[index] = newState[index].compose(delta)
+              }else{
+                newState[index] = delta
+              }
+              return newState
+            })
+          }
           setIsChanged(true)
-          setPreviousDeltas((prevState) => {
-            const newState = [...prevState]
-            newState[index] = delta
-            return newState
-          })
           // check if new content increased page size beyond threshold
           const shouldRevertChanges = checkPageSize(q, index)
           if(shouldRevertChanges){
@@ -411,7 +437,7 @@ const page = () => {
       socket.off("master-request")
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas])
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas, areChangesSent])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills) {
@@ -426,6 +452,7 @@ const page = () => {
     }
   }
   console.log(quills)
+  console.log("prev deltas: ", previousDeltas)
   // console.log("selection Properties: ", selectionProperties)
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {
