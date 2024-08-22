@@ -1,9 +1,9 @@
 import Quill from "quill"
 import SelectionProperties from "@/app/types/SelectionProperties"
 
-const changeCursorPosition = (selectionIndex: number, selectionLength: number, selectedQuill: Quill, selectionProperties: any, senderSocket: string, index: number, setSelectionProperties: any) => {
+const changeCursorPosition = (selectionIndex: number, selectionLength: number, selectedQuill: Quill, selectionProperties: SelectionProperties[], senderSocket: string, index: number, setSelectionProperties: any) => {
     const selectionBounds = selectedQuill.getBounds(selectionIndex, selectionLength)
-      if(selectionProperties){
+      if(selectionProperties.length > 0){
         const updatedState = selectionProperties.map((selectionProperty: SelectionProperties) => {
           if(selectionProperty.socketId === senderSocket){
             return {index: selectionIndex, length: selectionLength, bounds: selectionBounds, quillIndex: index, socketId: senderSocket}

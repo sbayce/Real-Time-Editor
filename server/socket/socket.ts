@@ -91,7 +91,7 @@ io.on("connection", (socket) => {
     io.to(requestingSocket).emit("recieve-master", content)
   })
 
-  socket.on("send-changes", async ({ delta, oldDelta, index }) => {
+  socket.on("send-changes", ({ delta, oldDelta, index }) => {
     console.log("index is: ", index)
     console.log("old is: ", oldDelta)
 

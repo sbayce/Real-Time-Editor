@@ -52,7 +52,7 @@ const page = () => {
   const [wrapperElements, setWrapperElements] = useState<HTMLDivElement[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const [parent, setParent] = useState()
-  const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[] | null>(null)
+  const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[]>([])
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [previousDeltas, setPreviousDeltas] = useState<Delta[]>([])
@@ -150,17 +150,31 @@ const page = () => {
 
   console.log(socket)
 
-  // useEffect(() => {
-  //   if(!selectionProperties || wrapperElements.length === 0) return
-  //   console.log("wrapperElements: ", wrapperElements)
-  //   const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
-  //   return () => {
-  //     divs.forEach(({ div, ql }) => {
-  //       ql.removeChild(div);
-  //     });
-  //   };
+  useEffect(() => {
+    if(!onlineUsers || !selectionProperties) return
+    selectionProperties.map((selectionPropery, index) => {
+      if(!onlineUsers.some((user) => user.socketId === selectionPropery.socketId)){
+        setSelectionProperties((prevState: any) => {
+          const updatedState = [...prevState]
+          updatedState.splice(index, 1)
+          return updatedState
+        })
+        
+      }
+    })
+  }, [onlineUsers, selectionProperties])
 
-  // }, [socket, onlineUsers, selectionProperties, wrapperElements])
+  useEffect(() => {
+    if(!selectionProperties || wrapperElements.length === 0) return
+    console.log("wrapperElements: ", wrapperElements)
+    const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
+    return () => {
+      divs.forEach(({ div, ql }) => {
+        ql.removeChild(div);
+      });
+    };
+
+  }, [socket, onlineUsers, selectionProperties, wrapperElements])
 
   console.log("socket: ", socket)
 
@@ -253,8 +267,8 @@ const page = () => {
       quills[index - 1].focus()
     })
 
-    socket.on("recieve-changes", ({ delta, index, oldDelta }: {delta: Delta, index: number, oldDelta: Delta}) => {
-      console.log("delta: ", delta.ops)
+    socket.on("recieve-changes", ({ delta, index, oldDelta }) => {
+      console.log("delta: ", delta)
       console.log("index: ", index)
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
@@ -266,16 +280,16 @@ const page = () => {
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
         selectedQuill.updateContents(delta)
-        setPreviousDeltas((prevState) => {
-          console.log("prevState: ", prevState)
-          const newState = [...prevState]
-          newState.splice(index, 1)
-          console.log("afterState: ", newState)
-          return newState
-        })
+        updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
+        // setPreviousDeltas((prevState) => {
+        //   console.log("prevState: ", prevState)
+        //   const newState = [...prevState]
+        //   newState.splice(index, 1)
+        //   console.log("afterState: ", newState)
+        //   return newState
+        // })
       }else{ 
         // should handle conflicts
-        console.log(previousDeltas)
         let transformed: any
         if(areChangesSent){
           transformed = previousDeltas[index]?.transform(delta, true)
@@ -284,14 +298,15 @@ const page = () => {
         }
         console.log("transformed: ", transformed)
         selectedQuill.updateContents(transformed)
-        setPreviousDeltas((prevState) => {
-        const newState = [...prevState]
-        newState.splice(index, 1)
-        return newState
-      })
+      //   setPreviousDeltas((prevState) => {
+      //   const newState = [...prevState]
+      //   newState.splice(index, 1)
+      //   return newState
+      // })
+      updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
       }
 
-      updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
+      
     })
 
     socket.on("recieve-selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
@@ -453,7 +468,7 @@ const page = () => {
   }
   console.log(quills)
   console.log("prev deltas: ", previousDeltas)
-  // console.log("selection Properties: ", selectionProperties)
+  console.log("selection Properties: ", selectionProperties)
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {
     if (!quill || !quills || !socket) return
