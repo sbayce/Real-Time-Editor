@@ -213,7 +213,6 @@ const page = () => {
   }, [])
 
   const handleCreateQuill = (socket?: Socket) => {
-    console.log("in HCQ: ", parent, quills, socket)
     if (parent && quills && socket) {
       const index = quills.length
       console.log("quill length: ", index)

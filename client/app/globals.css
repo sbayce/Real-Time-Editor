@@ -40,7 +40,6 @@ body {
 }
 .cursor{
   width: 2px;
-  height: 20px;
   animation: blink 1s step-end infinite;
 }
 .hidden {

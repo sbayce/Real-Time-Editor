@@ -15,6 +15,7 @@ const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUse
           div.style.left = `${Math.floor(selectionProperty.bounds.left)}px`;
           div.style.right = `${Math.floor(selectionProperty.bounds.right)}px`;
           div.style.bottom = `${Math.floor(selectionProperty.bounds.bottom)}px`;
+          div.style.height = `${selectionProperty.height-5}px`
 
           // Append the div to the container
           const quillIndex = selectionProperty.quillIndex
