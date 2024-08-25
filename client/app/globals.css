@@ -24,7 +24,8 @@ body {
   font-family: var(--font-roboto);
 }
 .highlight {
-  background-color: yellow;
+  opacity: 40%;
+  pointer-events: none;
 }
 .ql-container.ql-snow {
   width: 8.5in;
@@ -41,6 +42,7 @@ body {
 .cursor{
   width: 2px;
   animation: blink 1s step-end infinite;
+  pointer-events: none;
 }
 .hidden {
   visibility: hidden;
