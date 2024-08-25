@@ -8,9 +8,22 @@ const updateLiveCursor = (delta: Delta, selectionProperties: SelectionProperties
   for(let i =0 ;i< selectionProperties.length; i++){
     let cursor = selectionProperties[i]
     let newIndex = new Delta(delta).transformPosition(cursor.index)
-    let newBounds = selectedQuill.getBounds(newIndex, cursor.length)
+    let newStartBounds = selectedQuill.getBounds(newIndex, cursor.length)
+    let newEndBounds = selectedQuill.getBounds(newIndex + cursor.length, 0)
+    if(newIndex === cursor.index){
+      let newEndIndex = new Delta(delta).transformPosition(cursor.index + cursor.length)
+      console.log("new end index: ", newEndIndex)
+      newEndBounds = selectedQuill.getBounds(newEndIndex, 0)
+      if(newEndIndex > cursor.index + cursor.length){
+        updatedCursors[i].length ++
+      }
+      if(newEndIndex < cursor.index + cursor.length){
+        updatedCursors[i].length --
+      }
+    }
     updatedCursors[i].index = newIndex
-    updatedCursors[i].bounds = newBounds
+    updatedCursors[i].startBounds = newStartBounds
+    updatedCursors[i].endBounds = newEndBounds
   }
   setSelectionProperties(updatedCursors)
 }

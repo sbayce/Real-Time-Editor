@@ -7,21 +7,32 @@ const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUse
       for(let i = 0; i< selectionProperties.length; i++){
         const selectionProperty = selectionProperties[i]
         const userColor = getUserColor(onlineUsers, selectionProperty.socketId)
-        if(selectionProperty && selectionProperty.bounds){
-          const div = document.createElement('div');
-          div.className = `absolute cursor animate-pulse`;
-          div.style.backgroundColor = userColor
-          div.style.top = `${Math.floor(selectionProperty.bounds.top)}px`;
-          div.style.left = `${Math.floor(selectionProperty.bounds.left)}px`;
-          div.style.right = `${Math.floor(selectionProperty.bounds.right)}px`;
-          div.style.bottom = `${Math.floor(selectionProperty.bounds.bottom)}px`;
-          div.style.height = `${selectionProperty.height-5}px`
+        if(selectionProperty && selectionProperty.endBounds && selectionProperty.startBounds){
+          const cursor = document.createElement('div');
+          cursor.className = `absolute cursor`;
+          cursor.style.backgroundColor = userColor
+          cursor.style.top = `${Math.floor(selectionProperty.endBounds.top)}px`;
+          cursor.style.left = `${Math.floor(selectionProperty.endBounds.left)}px`;
+          cursor.style.right = `${Math.floor(selectionProperty.endBounds.right)}px`;
+          cursor.style.bottom = `${Math.floor(selectionProperty.endBounds.bottom)}px`;
+          cursor.style.height = `${Math.floor(selectionProperty.endBounds.height)}px`
+
+          const highlight = document.createElement('div');
+          highlight.className = `absolute highlight`;
+          highlight.style.backgroundColor = userColor
+          highlight.style.top = `${Math.floor(selectionProperty.startBounds.top)}px`;
+          highlight.style.left = `${Math.floor(selectionProperty.startBounds.left)}px`;
+          highlight.style.right = `${Math.floor(selectionProperty.startBounds.right)}px`;
+          highlight.style.bottom = `${Math.floor(selectionProperty.startBounds.bottom)}px`;
+          highlight.style.height = `${Math.floor(selectionProperty.startBounds.height)}px`
+          highlight.style.width = `${Math.floor(selectionProperty.startBounds.width)}px`
 
           // Append the div to the container
           const quillIndex = selectionProperty.quillIndex
           const ql = wrapperElements[quillIndex]
-          ql.appendChild(div);
-          divs.push({ div, ql });
+          ql.appendChild(cursor);
+          ql.appendChild(highlight);
+          divs.push({ cursor, ql, highlight });
         }
       }
       return divs

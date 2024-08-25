@@ -169,8 +169,9 @@ const page = () => {
     console.log("wrapperElements: ", wrapperElements)
     const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
     return () => {
-      divs.forEach(({ div, ql }) => {
-        ql.removeChild(div);
+      divs.forEach(({ cursor, ql, highlight }) => {
+        ql.removeChild(cursor)
+        ql.removeChild(highlight)
       });
     };
 
@@ -316,7 +317,7 @@ const page = () => {
       )
       const userColor = getUserColor(onlineUsers, senderSocket)
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
-      selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
+      // selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
     }
     )
     socket.on("replace-selection", ({ selectionIndex, selectionLength, oldRange, index, senderSocket }) => {
@@ -324,13 +325,13 @@ const page = () => {
         const userColor = getUserColor(onlineUsers, senderSocket)
         console.log("replace this: ",selectedQuill.getText(oldRange)," with this: ", selectedQuill.getText(selectionIndex, selectionLength))
         // preserve other formats and only remove 'background'
-        const oldRangeFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
-        delete oldRangeFormat.background
-        selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
-        selectedQuill.formatLine(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve line formatting
-        selectedQuill.formatText(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve text formatting
-        // highlight the new selection
-        selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
+        // const oldRangeFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
+        // delete oldRangeFormat.background
+        // selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
+        // selectedQuill.formatLine(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve line formatting
+        // selectedQuill.formatText(oldRange.index, oldRange.length, oldRangeFormat, "silent") //preserve text formatting
+        // // highlight the new selection
+        // selectedQuill.formatText(selectionIndex, selectionLength, {background: userColor}, "silent")
         changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
       }
     )
@@ -343,11 +344,11 @@ const page = () => {
       const selectedQuill = quills[index]
       console.log("remove: ", selectedQuill.getText(oldRange))
       // preserve other formats and only remove 'background'
-      const currentFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
-      delete currentFormat.background
-      selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
-      selectedQuill.formatLine(oldRange.index, oldRange.length, currentFormat, "silent") //preserve line formatting
-      selectedQuill.formatText(oldRange.index, oldRange.length, currentFormat, "silent") //preserve text formatting
+      // const currentFormat = selectedQuill.getFormat(oldRange.index, oldRange.length)
+      // delete currentFormat.background
+      // selectedQuill.removeFormat(oldRange.index, oldRange.length, "silent")
+      // selectedQuill.formatLine(oldRange.index, oldRange.length, currentFormat, "silent") //preserve line formatting
+      // selectedQuill.formatText(oldRange.index, oldRange.length, currentFormat, "silent") //preserve text formatting
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
     })
     if(editorData.accessType === AccessType.Write){

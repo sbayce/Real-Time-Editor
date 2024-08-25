@@ -3,9 +3,9 @@ import { Bounds } from "quill"
 type SelectionProperties = {
     index: number,
     length: number,
-    bounds: Bounds | null,
+    startBounds: Bounds | null,
+    endBounds: Bounds | null,
     quillIndex: number,
     socketId: string,
-    height: number
   }
   export default SelectionProperties
