@@ -9,13 +9,18 @@ const changeCursorPosition = (selectionIndex: number, selectionLength: number, s
     }
     console.log("selected bounds: ", startBounds)
       if(selectionProperties.length > 0){
+        let userSelectionAlreadyExists = false
         const updatedState = selectionProperties.map((selectionProperty: SelectionProperties) => {
           if(selectionProperty.socketId === senderSocket){
+            userSelectionAlreadyExists = true
             return {index: selectionIndex, length: selectionLength, startBounds, endBounds, quillIndex: index, socketId: senderSocket}
           }else{
             return selectionProperty
           }
         })
+        if(!userSelectionAlreadyExists){
+          updatedState.push({index: selectionIndex, length: selectionLength, startBounds, endBounds, quillIndex: index, socketId: senderSocket})
+        }
         setSelectionProperties(updatedState)
       }else{
         setSelectionProperties([{index: selectionIndex, length: selectionLength, startBounds, endBounds, quillIndex: index, socketId: senderSocket}])
