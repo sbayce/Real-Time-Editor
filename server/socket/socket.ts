@@ -111,45 +111,8 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("page-to-remove", index)
   })
 
-  socket.on(
-    "selection-change",
-    ({ selectionIndex, selectionLength, index }) => {
-      socket.broadcast
-        .to(roomId)
-        .emit("recieve-selection", {
-          selectionIndex,
-          selectionLength,
-          index,
-          senderSocket: socket.id,
-        })
-    }
-  )
-  socket.on(
-    "replace-selection",
-    ({ selectionIndex, selectionLength, oldRange, index }) => {
-      socket.broadcast
-        .to(roomId)
-        .emit("replace-selection", {
-          selectionIndex,
-          selectionLength,
-          oldRange,
-          index,
-          senderSocket: socket.id,
-        })
-    }
-  )
-  socket.on("remove-selection", ({ selectionIndex, selectionLength, oldRange, index }) => {
-    socket.broadcast.to(roomId).emit("remove-selection", { selectionIndex, selectionLength, oldRange, index, senderSocket: socket.id })
-  })
-  socket.on("cursor-update", ({ selectionIndex, selectionLength, index }) => {
-    socket.broadcast
-      .to(roomId)
-      .emit("recieve-cursor", {
-        selectionIndex,
-        selectionLength,
-        index,
-        senderSocket: socket.id,
-      })
+  socket.on("selection-change", ({ selectionIndex, selectionLength, index }) => {
+    socket.broadcast.to(roomId).emit("recieve-selection", { selectionIndex, selectionLength, index, senderSocket: socket.id })
   })
 
   socket.on("send_title", async (title) => {
