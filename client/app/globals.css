@@ -17,6 +17,19 @@
     --background-end-rgb: 0, 0, 0;
   }
 }
+@keyframes blink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
 
 body {
   /* background-color: black;
@@ -39,22 +52,60 @@ body {
   font-size: 16px;
   font-family: var(--font-roboto);
 }
-.cursor{
+.cursor {
   width: 2px;
-  animation: blink 1s step-end infinite;
+  background-color: inherit; /* Ensures the cursor bar has the right color */
+  /* pointer-events: none; */
+  margin-right: 100px;
+  opacity: 1; /* Initially visible */
+  transition: opacity 0.5s ease;
+  /* animation: fadeOut 0.5s ease forwards 1.5s;  */
+  /* animation: blink 1s step-end infinite; */
+}
+
+.cursor::after {
+  content: attr(data-username);
+  margin-left: 4px;
+  padding: 2px 4px;
+  background-color: inherit;
+  color: white;
+  font-size: 12px;
+  border-radius: 3px;
+  white-space: nowrap;
+  line-height: 1;
+  position: absolute;
+  left: 100%;
+  /* top: 0%; */
+  transform: translateY(-100%);
+  opacity: 1;
+  /* transition: opacity 0.5s ease;  */
+  animation: fadeOut 0.5s ease forwards 1.5s; 
   pointer-events: none;
 }
+.cursor.hide {
+  opacity: 0;
+}
+.cursor:hover {
+  opacity: 1;
+  animation: none;
+}
+.cursor:hover::after {
+  opacity: 1;
+  animation: none;
+}
+
 .hidden {
   visibility: hidden;
 }
-@keyframes blink {
+/* @keyframes blink {
   from, to {
     opacity: 1;
   }
   50% {
     opacity: 0;
   }
-}
+} */
+
 .ql-formats button{
   margin: 0 4px;
   border-radius: 5px;

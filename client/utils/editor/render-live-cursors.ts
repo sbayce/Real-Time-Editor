@@ -16,6 +16,7 @@ const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUse
           cursor.style.right = `${Math.floor(selectionProperty.endBounds.right)}px`;
           cursor.style.bottom = `${Math.floor(selectionProperty.endBounds.bottom)}px`;
           cursor.style.height = `${Math.floor(selectionProperty.endBounds.height)}px`
+          cursor.setAttribute('data-username', "sbaacce");
 
           const highlight = document.createElement('div');
           highlight.className = `absolute highlight`;
