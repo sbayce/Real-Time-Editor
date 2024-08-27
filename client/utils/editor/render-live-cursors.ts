@@ -1,12 +1,14 @@
 import SelectionProperties from "@/app/types/SelectionProperties";
 import getUserColor from "./get-user-color";
 import OnlineUser from "@/app/types/online-user";
+import getUserName from "./get-user-name";
 
 const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUsers: OnlineUser[] | null, wrapperElements: HTMLDivElement []) => {
     const divs: any[] =[]
       for(let i = 0; i< selectionProperties.length; i++){
         const selectionProperty = selectionProperties[i]
         const userColor = getUserColor(onlineUsers, selectionProperty.socketId)
+        const userName = getUserName(onlineUsers, selectionProperty.socketId)
         if(selectionProperty && selectionProperty.endBounds && selectionProperty.startBounds){
           const cursor = document.createElement('div');
           cursor.className = `absolute cursor`;
@@ -16,7 +18,7 @@ const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUse
           cursor.style.right = `${Math.floor(selectionProperty.endBounds.right)}px`;
           cursor.style.bottom = `${Math.floor(selectionProperty.endBounds.bottom)}px`;
           cursor.style.height = `${Math.floor(selectionProperty.endBounds.height)}px`
-          cursor.setAttribute('data-username', "sbaacce");
+          cursor.setAttribute('data-username', userName);
 
           const highlight = document.createElement('div');
           highlight.className = `absolute highlight`;
