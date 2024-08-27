@@ -123,7 +123,7 @@ const page = () => {
   // }, [socket, parent, editorData])
 
   useEffect(() => {
-    if (!socket) return
+    if (!socket || !parent) return
 
     socket.on("online_users", (data) => {
       console.log("online users are: ", data)
@@ -144,7 +144,7 @@ const page = () => {
         socket.disconnect()
       }
     }
-  }, [socket])
+  }, [socket, parent])
 
   console.log(socket)
 
@@ -200,18 +200,21 @@ const page = () => {
     if (!socket || !quills) return
     const quillElement = document.querySelector(`#quill-${index}`)
     container.removeChild(quillElement)
-    setQuills((prev: any) => prev.splice(index, 1))
+    setQuills((prev: any) => {
+      const newQuills = [...prev]
+      newQuills.splice(index, 1)
+      return newQuills
+    })
   }
 
   const wrapperRef = useCallback((wrapper: any) => {
     if (wrapper === null) return
     wrapper.innerHTML = ""
-    const editor = document.createElement("div")
-    wrapper.append(editor)
     setParent(wrapper)
   }, [])
 
-  const handleCreateQuill = (socket?: Socket) => {
+  const handleCreateQuill = (socket: Socket | null) => {
+    console.log(parent, quills, socket)
     if (parent && quills && socket) {
       const index = quills.length
       console.log("quill length: ", index)
@@ -221,6 +224,7 @@ const page = () => {
     }
   }
 
+  // periodic save
   useEffect(() => {
     if(!socket || quills.length === 0) return
     const interval = setInterval(() => {
@@ -308,48 +312,58 @@ const page = () => {
 
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
-          throttledKeyPress(delta, q, index, socket, oldDelta, setPreviousDeltas, setAreChangesSent)
-          if (index === 0) {
-            debounceScreenShot(queryClient, editorId)
+          if (q.getLength() === 1 && quills[index - 1]) {
+            setTimeout(() => {
+              q.blur()
+              removeQuill(parent, index)
+              socket.emit("remove-page", index)
+              quills[index - 1].focus()
+            }, 0.1)
+            return
           }
-          if(areChangesSent){
-            setPreviousDeltas((prevState) => {
-              const newState = [...prevState]
-              newState[index] = delta
-              return newState
-            })
-            setAreChangesSent(false)
-          }else{
-            setPreviousDeltas((prevState) => {
-              const newState = [...prevState]
-              if(newState[index]){
-                newState[index] = newState[index].compose(delta)
-              }else{
-                newState[index] = delta
-              }
-              return newState
-            })
-          }
-          setIsChanged(true)
           // check if new content increased page size beyond threshold
           const shouldRevertChanges = checkPageSize(q, index)
           if(shouldRevertChanges){
             //should cancel the changes and add a new page
-            q.updateContents(delta.invert(oldDelta))
+            q.updateContents(delta.invert(oldDelta), 'silent')
             if (quills[index + 1]) { //switch to page below if it exists
               setTimeout(() => {
                 q.blur()
                 quills[index + 1].focus()
               }, 0.1)
             } else {
-              handleCreateQuill()
+              handleCreateQuill(socket)
             }
+          }else{
+            throttledKeyPress(delta, q, index, socket, oldDelta, setPreviousDeltas, setAreChangesSent)
+            if (index === 0) {
+              debounceScreenShot(queryClient, editorId)
+            }
+            if(areChangesSent){
+              setPreviousDeltas((prevState) => {
+                const newState = [...prevState]
+                newState[index] = delta
+                return newState
+              })
+              setAreChangesSent(false)
+            }else{
+              setPreviousDeltas((prevState) => {
+                const newState = [...prevState]
+                if(newState[index]){
+                  newState[index] = newState[index].compose(delta)
+                }else{
+                  newState[index] = delta
+                }
+                return newState
+              })
+            }
+            setIsChanged(true)
           }
 
           updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
         })
         q.on("selection-change", (range, oldRange, source) => {
-          if (source !== "user" || !range) return
+          if ( !range) return
           console.log("range: ", range)
           const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
           for (let i = 0; i < toolbars.length; i++) {
@@ -393,14 +407,14 @@ const page = () => {
   const checkPageSize = (quill: Quill, quillIndex: number) => {
     if (!quill || !quills || !socket) return
     // removes page when the content is empty. Auto focuses to the previous page
-    if (quill.getLength() === 1 && quills[quillIndex - 1]) {
-      setTimeout(() => {
-        quill.blur()
-        removeQuill(parent, quillIndex)
-        socket.emit("remove-page", quillIndex)
-        quills[quillIndex - 1].focus()
-      }, 0.1)
-    }
+    // if (quill.getLength() === 1 && quills[quillIndex - 1]) {
+    //   setTimeout(() => {
+    //     quill.blur()
+    //     removeQuill(parent, quillIndex)
+    //     socket.emit("remove-page", quillIndex)
+    //     quills[quillIndex - 1].focus()
+    //   }, 0.1)
+    // }
     let pageSize = quill.root.clientHeight
     let sum = 0
     for (let i = 0; i < quill.root.children.length; i++) {
@@ -440,14 +454,14 @@ const page = () => {
               radius="sm"
               variant="ghost"
               color="primary"
-              onClick={handleCreateQuill}
+              onClick={() => handleCreateQuill(socket)}
             >
               <DocumentIcon className="w-4" />
               Add page
             </Button>
           </div>
           <div className="flex gap-10 justify-center pt-40">
-            <div ref={wrapperRef} className="relative"></div>
+            <div id="wrapperRef" ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56 absolute right-16">
               <h1>Online Collaborators</h1>
               {onlineUsers &&

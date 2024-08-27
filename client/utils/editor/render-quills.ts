@@ -4,6 +4,7 @@ const renderQuills = (content: any, handleCreateQuill: Function, loadQuill: Func
     if(Object.entries(content).length === 0){
         console.log("will create quill..")
         handleCreateQuill(socket)
+        return
     }
     for (const [key, value] of Object.entries(content)) {
         loadQuill(key, value)
