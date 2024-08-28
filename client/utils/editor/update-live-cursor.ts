@@ -7,6 +7,9 @@ const updateLiveCursor = (delta: Delta, selectionProperties: SelectionProperties
   let updatedCursors = [...selectionProperties]
   for(let i =0 ;i< selectionProperties.length; i++){
     let cursor = selectionProperties[i]
+    // skip if cursor is not in the same quill
+    if(cursor.quillIndex !== quillIndex) continue
+
     let newIndex = new Delta(delta).transformPosition(cursor.index)
     let newStartBounds = selectedQuill.getBounds(newIndex, cursor.length)
     let newEndBounds = selectedQuill.getBounds(newIndex + cursor.length, 0)
