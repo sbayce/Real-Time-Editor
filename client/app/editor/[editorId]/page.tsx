@@ -178,7 +178,7 @@ const page = () => {
   console.log("socket: ", socket)
 
   const initializeQuill = useCallback((container: any, id: string) => {
-    document.getElementById(`quill-${id}`)?.remove()
+    // document.getElementById(`quill-${id}`)?.remove()
     const editor = document.createElement("div")
     editor.style.border = "none"
     editor.id = `quill-${id}`
@@ -192,18 +192,47 @@ const page = () => {
       const toolbar = quillInstance.getModule("toolbar").container
       toolbar.style.visibility = "hidden"
     }
-
+    
     return quillInstance
   }, [editorData])
 
   const removeQuill = (container: any, index: number) => {
-    if (!socket || !quills) return
-    const quillElement = document.querySelector(`#quill-${index}`)
-    container.removeChild(quillElement)
+    if (!socket || !quills || !wrapperElements) return
+    // const quillElement = document.querySelector(`#quill-${index}`)
+    // if(quillElement) container.removeChild(quillElement)
+    const quillElement = quills[index].container
+    if(quillElement){
+      container.removeChild(quillElement)
+    }
     setQuills((prev: any) => {
       const newQuills = [...prev]
       newQuills.splice(index, 1)
       return newQuills
+    })
+    /* should remove cursors from target quill (that will be deleted)
+       cursors from quills below target quill should shift their index -1
+       cursors from quills above target quill should remain the same */
+
+    setSelectionProperties(prev => {
+      const newSelectionProperties = prev.filter(selectionProperty => selectionProperty.quillIndex !== index)
+      .map(selectionProperty => {
+        if(selectionProperty.quillIndex > index){
+          return {
+            ...selectionProperty,
+            quillIndex: selectionProperty.quillIndex-1
+          }
+        }else{
+          return {...selectionProperty}
+        }
+      })
+      // const newSelectionProperties = prev.filter(selectionProperty => selectionProperty.quillIndex !== index)
+      console.log("NEW SELECTION PROPERTIES: ", newSelectionProperties)
+      return newSelectionProperties
+    })
+    setWrapperElements((prev: any) => {
+      const newWrapperElements = [...prev]
+      newWrapperElements.splice(index, 1)
+      return newWrapperElements
     })
   }
 
@@ -219,6 +248,10 @@ const page = () => {
       const index = quills.length
       console.log("quill length: ", index)
       const newQuill = initializeQuill(parent, String(index))
+      // auto-focus
+      setTimeout(() => {
+        newQuill.focus()
+      }, 0)
       setQuills((prev: any) => [...prev, newQuill])
       socket.emit("add-page", { index })
     }
@@ -264,9 +297,12 @@ const page = () => {
       if (!quills[index - 1]) return
       console.log("will remove page.")
       console.log(quills[index])
-      quills[index].blur()
+      if(quills[index].hasFocus()){
+        console.log("----has focus----")
+        // quills[index].blur()
+        quills[index - 1].focus()
+      }
       removeQuill(parent, index)
-      quills[index - 1].focus()
     })
 
     socket.on("recieve-changes", ({ delta, index, oldDelta }) => {
@@ -317,7 +353,8 @@ const page = () => {
               q.blur()
               removeQuill(parent, index)
               socket.emit("remove-page", index)
-              quills[index - 1].focus()
+              // auto-focus on previous quill (on last index)
+              quills[index-1].setSelection(quills[index-1].getLength())
             }, 0.1)
             return
           }
