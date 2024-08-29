@@ -2,8 +2,9 @@ import SelectionProperties from "@/app/types/SelectionProperties";
 import getUserColor from "./get-user-color";
 import OnlineUser from "@/app/types/online-user";
 import getUserName from "./get-user-name";
+import Quill from "quill";
 
-const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUsers: OnlineUser[] | null, wrapperElements: HTMLDivElement []) => {
+const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUsers: OnlineUser[] | null, quills: Quill[]) => {
     const divs: any[] =[]
       for(let i = 0; i< selectionProperties.length; i++){
         const selectionProperty = selectionProperties[i]
@@ -32,7 +33,7 @@ const renderLiveCursors = (selectionProperties: SelectionProperties[], onlineUse
 
           // Append the div to the container
           const quillIndex = selectionProperty.quillIndex
-          const ql = wrapperElements[quillIndex]
+          const ql = quills[quillIndex].container
           ql.appendChild(cursor);
           ql.appendChild(highlight);
           divs.push({ cursor, ql, highlight });

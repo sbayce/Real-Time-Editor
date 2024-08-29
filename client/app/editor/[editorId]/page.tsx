@@ -50,7 +50,6 @@ const page = () => {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
   const [quills, setQuills] = useState<Quill[]>([])
-  const [wrapperElements, setWrapperElements] = useState<HTMLDivElement[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const [parent, setParent] = useState()
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[]>([])
@@ -112,16 +111,6 @@ const page = () => {
     }
   }, [editorData, parent])
 
-  // useEffect(() => {
-  //   if (!socket || !parent || !editorData) return
-  //   if(Object.entries(editorData.content).length === 0){
-  //     handleCreateQuill()
-  //   }
-  //   for (const [key, value] of Object.entries(editorData.content)) {
-  //     loadQuill(key, value)
-  //   }
-  // }, [socket, parent, editorData])
-
   useEffect(() => {
     if (!socket || !parent) return
 
@@ -163,9 +152,8 @@ const page = () => {
   }, [onlineUsers])
 
   useEffect(() => {
-    if(!selectionProperties || wrapperElements.length === 0) return
-    console.log("wrapperElements: ", wrapperElements)
-    const divs = renderLiveCursors(selectionProperties, onlineUsers, wrapperElements)
+    if(!selectionProperties || quills.length === 0) return
+    const divs = renderLiveCursors(selectionProperties, onlineUsers, quills)
     return () => {
       divs.forEach(({ cursor, ql, highlight }) => {
         ql.removeChild(cursor)
@@ -173,11 +161,11 @@ const page = () => {
       });
     };
 
-  }, [socket, onlineUsers, selectionProperties, wrapperElements])
+  }, [socket, onlineUsers, selectionProperties, quills])
 
   console.log("socket: ", socket)
 
-  const initializeQuill = useCallback((container: any, id: string) => {
+  const initializeQuill = (container: any, id: string) => {
     // document.getElementById(`quill-${id}`)?.remove()
     const editor = document.createElement("div")
     editor.style.border = "none"
@@ -187,17 +175,17 @@ const page = () => {
       theme: "snow",
       modules: { toolbar: toolbarOptions, history: { userOnly: true } },
     })
-    setWrapperElements((prev) => [...prev, editor])
+
     if(editorData?.accessType === AccessType.Read || id !== '0'){
       const toolbar = quillInstance.getModule("toolbar").container
       toolbar.style.visibility = "hidden"
     }
     
     return quillInstance
-  }, [editorData])
+  }
 
   const removeQuill = (container: any, index: number) => {
-    if (!socket || !quills || !wrapperElements) return
+    if (!socket || !quills) return
     // const quillElement = document.querySelector(`#quill-${index}`)
     // if(quillElement) container.removeChild(quillElement)
     const quillElement = quills[index].container
@@ -228,11 +216,6 @@ const page = () => {
       // const newSelectionProperties = prev.filter(selectionProperty => selectionProperty.quillIndex !== index)
       console.log("NEW SELECTION PROPERTIES: ", newSelectionProperties)
       return newSelectionProperties
-    })
-    setWrapperElements((prev: any) => {
-      const newWrapperElements = [...prev]
-      newWrapperElements.splice(index, 1)
-      return newWrapperElements
     })
   }
 
@@ -295,11 +278,7 @@ const page = () => {
 
     socket.on("page-to-remove", (index) => {
       if (!quills[index - 1]) return
-      console.log("will remove page.")
-      console.log(quills[index])
       if(quills[index].hasFocus()){
-        console.log("----has focus----")
-        // quills[index].blur()
         quills[index - 1].focus()
       }
       removeQuill(parent, index)
@@ -311,7 +290,7 @@ const page = () => {
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
       const senderContent = JSON.parse(JSON.stringify(oldDelta))
-      const currentContent = JSON.parse(JSON.stringify(selectedQuill.getContents()))
+      const currentContent = JSON.parse(JSON.stringify(selectedQuill?.getContents()))
       console.log("sender old: ", senderContent)
       console.log("current cont: ", currentContent)
 
@@ -421,6 +400,11 @@ const page = () => {
       socket.off("recieve-selection")
       socket.off("page-to-remove")
       socket.off("master-request")
+      quills.map((quill) => {
+        quill.off("text-change")
+        quill.off("selection-change")
+      })
+      console.log("QUILLs: ", quills)
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas, areChangesSent])
@@ -443,15 +427,7 @@ const page = () => {
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {
     if (!quill || !quills || !socket) return
-    // removes page when the content is empty. Auto focuses to the previous page
-    // if (quill.getLength() === 1 && quills[quillIndex - 1]) {
-    //   setTimeout(() => {
-    //     quill.blur()
-    //     removeQuill(parent, quillIndex)
-    //     socket.emit("remove-page", quillIndex)
-    //     quills[quillIndex - 1].focus()
-    //   }, 0.1)
-    // }
+
     let pageSize = quill.root.clientHeight
     let sum = 0
     for (let i = 0; i < quill.root.children.length; i++) {
