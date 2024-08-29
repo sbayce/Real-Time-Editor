@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "sucrase . -d ./dist --transforms typescript,imports",
+    "build": "sucrase ./src -d ./dist --transforms typescript,imports",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./index.ts"
+    "start": "nodemon ./src/index.ts"
   },
   "keywords": [],
   "author": "",
