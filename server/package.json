@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "sucrase . -d ./dist --transforms typescript,imports",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon ./index.ts"
   },
@@ -21,7 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.12.0",
     "redis": "^4.6.15",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "sucrase": "^3.35.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
