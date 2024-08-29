@@ -1,15 +1,15 @@
 import express from "express"
 import dotenv from "dotenv"
-import authRouter from "./routes/auth"
+import authRouter from "../routes/auth"
 import cors from "cors"
 import * as bodyParser from "body-parser"
 import { Pool } from "pg"
-import pool from "./db"
-import isAuthenticated from "./middleware/auth"
-import userRouter from "./routes/user"
+import pool from "../db"
+import isAuthenticated from "../middleware/auth"
+import userRouter from "../routes/user"
 import cookieParser from "cookie-parser"
-import { app, server } from "./socket/socket"
-import editorRouter from "./routes/editor"
+import { app, server } from "../socket/socket"
+import editorRouter from "../routes/editor"
 
 declare global {
   namespace Express {
