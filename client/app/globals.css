@@ -113,6 +113,11 @@ body {
 .ql-formats button:hover{
   background-color: #A6A9B1 !important;
 }
+.ql-toolbar .ql-formats:not(:last-child) {
+  border-right: 1px solid #ccc; /* Adjust the color as needed */
+  margin-right: 10px; /* Space between the separator and the next group */
+  padding-right: 10px; /* Space between the buttons and the separator */
+}
 .ql-toolbar {
   /* padding-top: 100px; */
   /* margin: 1rem; */
@@ -124,7 +129,7 @@ body {
   z-index: 1;
   background-color: #f3f3f3;
   border: none !important;
-  border-bottom: 1px solid !important;
+  border-bottom: 1px solid #878b91 !important;
   /* box-shadow: 0 0 0 0 rgba(0, 0, 0, .5); */
   display: flex;
   align-items: flex-end;
@@ -150,7 +155,7 @@ body {
     align-self: flex-start;
     /* overflow: hidden !important; */
   }
-  .ql-toolbar {
+  .highlight, .cursor, .ql-toolbar {
     display: none;
   }
 }
