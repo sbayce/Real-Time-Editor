@@ -25,18 +25,17 @@ const captureScreenshot = (queryClient: QueryClient, editorId: string) => {
     if (!ql) return
     // hide all cursors to not appear in screenshot
     const cursors = ql.querySelectorAll(".cursor")
-    for(let i =0; i<cursors.length; i++){
-      cursors[i].classList.add("hidden")
-    }
+    const hightlights = ql.querySelectorAll('.highlight')
+    cursors.forEach(cursor => cursor.classList.add('hidden'))
+    hightlights.forEach(hightlight => hightlight.classList.add('hidden'))
     html2canvas(ql, {
       useCORS: true,
     })
       .then((canvas) => {
         storeImage(canvas.toDataURL(), queryClient, editorId)
         // add cursors back
-        for(let i =0; i<cursors.length; i++){
-          cursors[i].classList.remove("hidden")
-        }
+        cursors.forEach(cursor => cursor.classList.remove('hidden'))
+        hightlights.forEach(hightlight => hightlight.classList.remove('hidden'))
       })
       .catch((err) => console.error("Error capturing screenshot:", err))
   }
