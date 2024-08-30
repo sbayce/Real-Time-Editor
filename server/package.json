@@ -6,7 +6,7 @@
   "scripts": {
     "build": "sucrase ./src -d ./dist --transforms typescript,imports",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./src/index.ts"
+    "start": "nodemon index.ts"
   },
   "keywords": [],
   "author": "",

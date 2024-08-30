@@ -23,6 +23,9 @@ declare global {
 }
 
 dotenv.config()
+app.get("/", (req, res) => {
+  res.send("test")
+})
 
 app.use(cookieParser())
 app.use(bodyParser.json())
