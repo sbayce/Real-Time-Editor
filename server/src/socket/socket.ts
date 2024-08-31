@@ -187,7 +187,7 @@ io.on("connection", (socket) => {
 })
 
 io.engine.on("connection_error", (err) => {
-  console.log(`connect_error due to: ${err}`)
+  console.log(err)
 })
 
 export { app, server, io }
