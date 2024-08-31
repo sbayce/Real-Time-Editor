@@ -92,7 +92,10 @@ const page = () => {
         userEmail: editorData.userEmail,
         username: editorData.username,
       },
-      withCredentials: true
+      withCredentials: true,
+      extraHeaders: {
+        'Access-Control-Allow-Origin' : ''
+      }
     })
     setSocket(socket)
     socket.on("recieve-master", (content) => {
