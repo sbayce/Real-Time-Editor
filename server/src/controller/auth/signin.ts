@@ -35,7 +35,6 @@ const signin = async (req: Request, res: Response) => {
       domain: accessTokenCookieDomain,
     })
     res.status(200).json({ token })
-    
   } catch (error) {
     res.status(500).json(error)
   }
