@@ -4,7 +4,8 @@ import { useState } from "react"
 import axios from "axios"
 import { useRouter } from "next/navigation"
 import { Input } from "@nextui-org/input"
-import { Button } from "@nextui-org/react"
+import { Button, Divider } from "@nextui-org/react"
+import Link from "next/link"
 
 const SignupForm = () => {
   const router = useRouter()
@@ -37,41 +38,50 @@ const SignupForm = () => {
   }
   return (
     <form onSubmit={handleSignUp}>
-      <div className="border rounded-md px-6 py-2 flex flex-col gap-4 text-sm">
+      <div className="p-20 flex flex-col gap-4 text-sm w-[30rem]">
+      <h1 className="text-gray-400 text-3xl">Sign up</h1>
         <div>
           <label>Username</label>
           <Input
             required
-            variant="underlined"
+            variant="faded"
             type="text"
             isClearable
             onValueChange={setUsername}
+            radius="sm"
           />
         </div>
         <div>
           <label>Email</label>
           <Input
             required
-            variant="underlined"
+            variant="faded"
             type="email"
             isClearable
             onValueChange={setEmail}
+            radius="sm"
           />
         </div>
         <div>
           <label>Password</label>
           <Input
             required
-            variant="underlined"
+            variant="faded"
             type="password"
             isClearable
             onValueChange={setPassword}
+            radius="sm"
           />
         </div>
 
-        <Button type="submit" color="secondary" variant="solid">
+        <Button className="self-end mt-4" type="submit" radius="sm" color="secondary" variant="solid">
           Sign Up
         </Button>
+        <Divider />
+        <div className="flex justify-between mt-4">
+          <p className="text-gray-600">Already have an account</p>
+          <Link href="/signin" className="text-blue-800">Sign in</Link>
+        </div>
       </div>
     </form>
   )

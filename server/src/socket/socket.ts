@@ -19,6 +19,16 @@ type SocketData = {
   color: string
 }
 
+function generateMutedColor() {
+  // Limit the color channels to a middle range to avoid vibrant colors
+  const red = Math.floor(Math.random() * 156) + 50;  // Range: 50-205
+  const green = Math.floor(Math.random() * 156) + 50; // Range: 50-205
+  const blue = Math.floor(Math.random() * 156) + 50;  // Range: 50-205
+  
+  const color = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
+  return color;
+}
+
 const roomMap = new Map<string, Map<string, SocketData>>()
 const socketMap = new Map<string, SocketData>()
 let masterSocket: string | undefined
@@ -38,14 +48,16 @@ io.on("connection", (socket) => {
     newRoomMap.set(socketId, {
       email: userEmail,
       username: username,
-      color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+      color: generateMutedColor()
+      // color: "#" + Math.floor(Math.random() * 16777215).toString(16),
     })
     roomMap.set(roomId, newRoomMap)
   } else {
     currentRoomMap.set(socketId, {
       email: userEmail,
       username: username,
-      color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+      color: generateMutedColor()
+      // color: "#" + Math.floor(Math.random() * 16777215).toString(16),
     })
     roomMap.set(roomId, currentRoomMap)
   }

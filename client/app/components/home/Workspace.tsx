@@ -50,13 +50,13 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     <>
       {ownedData && (
         <div>
-          <h1 className="text-3xl font-medium mb-2 text-center">
+          <h1 className="text-3xl font-medium mb-4 text-center">
             Your Work
           </h1>
-          <div className="grid grid-cols-5 gap-4 pt-4">
+          <div className="grid grid-cols-5 gap-4">
             <button
               onClick={createEditor}
-              className="flex justify-center items-center border rounded-sm w-[208px] hover:border-gray-300"
+              className="flex justify-center items-center border rounded-sm w-[208px] h-[23.5rem] hover:border-gray-300"
             >
               <AddIcon className="w-14" />
             </button>
@@ -72,7 +72,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
       )}
       {collaboratedData.length > 0 && (
         <div>
-          <h1 className="text-3xl font-medium mb-2 text-center mt-8">
+          <h1 className="text-3xl font-medium mb-4 text-center mt-8">
             Your Collaboration
           </h1>
           <div className="grid grid-cols-4 gap-4">
