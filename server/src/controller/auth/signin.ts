@@ -39,6 +39,7 @@ const signin = async (req: Request, res: Response) => {
       secure: true
     })
     res.status(200).json({ token })
+    
   } catch (error) {
     res.status(500).json(error)
   }
