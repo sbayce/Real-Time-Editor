@@ -4,9 +4,9 @@ import type { NextRequest } from 'next/server'
  
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
-    console.log("middleware")
     const accessToken = request.cookies.get("accessToken")
     const refreshToken = request.cookies.get("refreshToken")
+    console.log("accessToken: ", accessToken, "\n refreshToken: ", refreshToken)
     if(accessToken || refreshToken){
         return NextResponse.next()
     }else{
