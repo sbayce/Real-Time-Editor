@@ -23,14 +23,14 @@ const signup = async (req: Request, res: Response) => {
     res.cookie("accessToken", token.accessToken, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
-      domain: "",
+      domain: ".vercel.app",
       sameSite: "none",
       secure: true
     })
     res.cookie("refreshToken", token.refreshToken, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      domain: "",
+      domain: ".vercel.app",
       sameSite: "none",
       secure: true
     })
