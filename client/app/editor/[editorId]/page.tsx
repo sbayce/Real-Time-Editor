@@ -93,6 +93,7 @@ const page = () => {
         username: editorData.username,
       },
       withCredentials: true,
+      transports: ['websocket', 'polling', 'flashsocket']
     })
     setSocket(socket)
     socket.on("recieve-master", (content) => {
