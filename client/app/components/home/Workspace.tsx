@@ -50,8 +50,8 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     <>
       {ownedData && (
         <div>
-          <h1 className="text-2xl font-medium mb-2 text-center">
-            Your Editors
+          <h1 className="text-3xl font-medium mb-2 text-center">
+            Your Work
           </h1>
           <div className="grid grid-cols-5 gap-4 pt-4">
             <button
@@ -70,19 +70,17 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
           </div>
         </div>
       )}
-      {collaboratedData && (
+      {collaboratedData.length > 0 && (
         <div>
-          <h1 className="text-2xl font-medium mb-2 text-center mt-8">
+          <h1 className="text-3xl font-medium mb-2 text-center mt-8">
             Your Collaboration
           </h1>
           <div className="grid grid-cols-4 gap-4">
-            {collaboratedData && (
               <GridView
                 data={collaboratedData}
                 deleteEditor={deleteEditor}
                 queryClient={queryClient}
               />
-            )}
           </div>
         </div>
       )}

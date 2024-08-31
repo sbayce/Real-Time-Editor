@@ -4,12 +4,8 @@ import SigninForm from "../components/auth/SigninForm"
 const page = () => {
   return (
     <>
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="flex flex-col ">
-          {/* <h1 className="text-xl font-medium">Create. Collaborate.</h1> */}
-          <h1 className="text-gray-400">Log in.</h1>
-        </div>
-        <SigninForm />
+      <div className="flex flex-col items-center justify-center min-h-screen absolute top-0 left-1/2 right-1/2">
+          <SigninForm />
       </div>
     </>
   )
