@@ -7,7 +7,7 @@ const storeImage = async (img: any, queryClient: QueryClient, editorId: string) 
     try {
       await axios
         .post(
-          `http://localhost:4000/editor/set-snapshot/${editorId}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/editor/set-snapshot/${editorId}`,
           { img },
           { withCredentials: true }
         )
@@ -21,7 +21,7 @@ const storeImage = async (img: any, queryClient: QueryClient, editorId: string) 
   }
 
 const captureScreenshot = (queryClient: QueryClient, editorId: string) => {
-    const ql = document.querySelector(".ql-container.ql-snow")
+    const ql = document.querySelector(".ql-container.ql-snow") as HTMLElement
     if (!ql) return
     // hide all cursors to not appear in screenshot
     const cursors = ql.querySelectorAll(".cursor")

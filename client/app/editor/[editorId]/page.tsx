@@ -177,8 +177,8 @@ const page = () => {
     })
 
     if(editorData?.accessType === AccessType.Read || id !== '0'){
-      const toolbar = quillInstance.getModule("toolbar").container
-      toolbar.style.visibility = "hidden"
+      const toolbar = quillInstance.getModule("toolbar") as { container: HTMLDivElement }
+      toolbar.container.style.visibility = "hidden"
     }
     
     return quillInstance
@@ -382,11 +382,11 @@ const page = () => {
           if ( !range) return
           console.log("range: ", range)
           const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
-          for (let i = 0; i < toolbars.length; i++) {
-            toolbars[i].style.visibility = "hidden"
-          }
-          const toolbar: HTMLDivElement = q.getModule("toolbar").container
-          toolbar.style.visibility = "visible"
+          toolbars.forEach(toolbar => {
+            (toolbar as HTMLElement ).style.visibility = "hidden"
+          })
+          const toolbar = q.getModule("toolbar") as { container: HTMLDivElement }
+          toolbar.container.style.visibility = "visible"
 
           const selectionLength = range.length
           const selectionIndex = range.index
