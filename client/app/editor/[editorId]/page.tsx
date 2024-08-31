@@ -92,6 +92,7 @@ const page = () => {
         userEmail: editorData.userEmail,
         username: editorData.username,
       },
+      withCredentials: true
     })
     setSocket(socket)
     socket.on("recieve-master", (content) => {
