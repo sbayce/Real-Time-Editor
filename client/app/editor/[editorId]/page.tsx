@@ -93,7 +93,6 @@ const page = () => {
         username: editorData.username,
       },
       withCredentials: true,
-      transports: ['websocket']
     })
     setSocket(socket)
     socket.on("recieve-master", (content) => {
