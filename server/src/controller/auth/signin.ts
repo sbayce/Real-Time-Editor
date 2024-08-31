@@ -34,6 +34,7 @@ const signin = async (req: Request, res: Response) => {
       httpOnly: true,
       domain: accessTokenCookieDomain,
     })
+    
     res.status(200).json({ token })
   } catch (error) {
     res.status(500).json(error)
