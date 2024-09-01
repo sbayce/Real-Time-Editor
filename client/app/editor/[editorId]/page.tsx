@@ -455,6 +455,7 @@ const page = () => {
               onSubmit={onTitleSubmit}
               className="self-start flex justify-between left-2 fixed"
             >
+              
               <input
                 ref={inputRef}
                 value={title}
