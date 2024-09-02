@@ -26,6 +26,6 @@ const throttle = (delay: number) => {
     };
   }
 
-  const throttleSelectionChange = throttle(3000)
+  const throttleSelectionChange = throttle(50)
 
   export default throttleSelectionChange
