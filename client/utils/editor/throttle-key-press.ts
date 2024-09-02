@@ -43,6 +43,6 @@ const throttle = (mainFunction: Function, delay: number) => {
     };
   }
 
-  const throttledKeyPress = throttle(() => {}, 500)
+  const throttledKeyPress = throttle(() => {}, 3000)
 
   export default throttledKeyPress
