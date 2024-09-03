@@ -17,7 +17,7 @@ import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
 import { useQueryClient } from "react-query"
 import { Delta } from "quill/core"
-import throttledKeyPress from "@/utils/editor/throttle-key-press"
+import {throttledKeyPress, setIgnoredDelta} from "@/utils/editor/throttle-key-press"
 import throttleSelectionChange from "@/utils/editor/throttle-selection-change"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
@@ -117,7 +117,6 @@ const page = () => {
     if (!socket || !parent) return
 
     socket.on("online_users", (data) => {
-      console.log("online users are: ", data)
       setOnlineUsers(data)
     })
     socket.on("recieve-page", ({ index }) => {
@@ -136,8 +135,6 @@ const page = () => {
       }
     }
   }, [socket, parent])
-
-  console.log(socket)
 
   useEffect(() => {
     if(!onlineUsers || !selectionProperties) return
@@ -164,8 +161,6 @@ const page = () => {
     };
 
   }, [socket, onlineUsers, selectionProperties, quills])
-
-  console.log("socket: ", socket)
 
   const initializeQuill = (container: any, id: string) => {
     // document.getElementById(`quill-${id}`)?.remove()
@@ -257,7 +252,6 @@ const page = () => {
       }
     }, 2000)
     return () => {
-      console.log("re-render")
       clearInterval(interval)
     }
   }, [socket, quills, isChanged])
@@ -287,14 +281,11 @@ const page = () => {
     })
 
     socket.on("recieve-changes", ({ delta, index, oldDelta }) => {
-      console.log("delta: ", delta)
-      console.log("index: ", index)
+      console.log("got delta: ", delta.ops, "from index: ", index)
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
       const senderContent = JSON.parse(JSON.stringify(oldDelta))
       const currentContent = JSON.parse(JSON.stringify(selectedQuill?.getContents()))
-      console.log("sender old: ", senderContent)
-      console.log("current cont: ", currentContent)
 
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
@@ -303,6 +294,8 @@ const page = () => {
 
       }else{ 
         // should handle conflicts
+        console.log("sender old: ", senderContent)
+        console.log("current cont: ", currentContent)
         let transformed: any
         if(areChangesSent){
           transformed = previousDeltas[index]?.transform(delta, true)
@@ -310,6 +303,8 @@ const page = () => {
           transformed = previousDeltas[index]?.transform(delta, false)
         }
         console.log("transformed: ", transformed)
+        const invertedDelta = transformed.invert(selectedQuill.getContents())
+        setIgnoredDelta(invertedDelta)
         selectedQuill.updateContents(transformed)
 
         updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
@@ -318,7 +313,7 @@ const page = () => {
 
     socket.on("recieve-selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
       const selectedQuill = quills[index]
-      console.log("recieved selection: ", selectedQuill.getText(selectionIndex, selectionLength))
+      selectionLength > 0 && console.log("recieved selection: ", selectedQuill.getText(selectionIndex, selectionLength))
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
     }
     )
@@ -382,7 +377,6 @@ const page = () => {
         })
         q.on("selection-change", (range, oldRange, source) => {
           if ( !range) return
-          console.log("range: ", range)
           const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
           toolbars.forEach(toolbar => {
             (toolbar as HTMLElement ).style.visibility = "hidden"
@@ -406,7 +400,6 @@ const page = () => {
         quill.off("text-change")
         quill.off("selection-change")
       })
-      console.log("QUILLs: ", quills)
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas, areChangesSent])
@@ -435,9 +428,6 @@ const page = () => {
     for (let i = 0; i < quill.root.children.length; i++) {
       sum += quill?.root.children[i].clientHeight
     }
-    console.log("height: ", pageSize)
-    console.log("sum: ", sum)
-    console.log("quill length: ", quill.getLength())
     if (sum > pageSize - 50) {
       return true
     }

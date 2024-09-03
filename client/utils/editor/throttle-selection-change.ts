@@ -20,7 +20,6 @@ const throttle = (delay: number) => {
 
       timerFlag = setTimeout(() => { 
         socket.emit("selection-change", {selectionIndex: updatedSelectionIndex, selectionLength: updatedSelectionLength, index: updatedIndex})
-        console.log("sent selection.")
         timerFlag = null; 
       }, delay);
     };
