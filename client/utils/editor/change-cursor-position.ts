@@ -7,7 +7,6 @@ const changeCursorPosition = (selectionIndex: number, selectionLength: number, s
     if(selectionLength > 0){
       endBounds = selectedQuill.getBounds(selectionIndex + selectionLength, 0)
     }
-    console.log("selected bounds: ", startBounds)
       if(selectionProperties.length > 0){
         let userSelectionAlreadyExists = false
         const updatedState = selectionProperties.map((selectionProperty: SelectionProperties) => {

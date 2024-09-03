@@ -6,11 +6,25 @@ import isEqual from 'lodash.isequal'
 const throttle = (mainFunction: Function, delay: number) => {
     let timerFlag: any
     let deltas: Delta[] = []
+    let invertedDelta: Delta | null = null
+
+    const setIgnoredDelta = (value: Delta) => {
+      if(timerFlag) invertedDelta = value
+    }
   
-    return (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setPreviousDeltas: any, setAreChangesSent: any) => {
+    const throttledKeyPress = (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setPreviousDeltas: any, setAreChangesSent: any) => {
       if(!socket) return
       if(timerFlag){
-        deltas.push(delta)
+        if(invertedDelta){
+          console.log("--------------IGNORE---------------------")
+          console.log("original delta: ", delta)
+          const deltaIgnore = invertedDelta.transform(delta, true)
+          console.log("original delta: ", delta)
+          console.log("delta-ignore: ", deltaIgnore)
+          deltas.push(deltaIgnore)
+        }else{
+          deltas.push(delta)
+        }
         return
       }
       deltas.push(delta)
@@ -21,7 +35,6 @@ const throttle = (mainFunction: Function, delay: number) => {
             parentDelta = parentDelta.compose(deltas[i])
           }
           console.log("composed delta: ", parentDelta)
-          console.log("old delta: ", oldDelta)
           /* emit event if content change
              current != old --> change
              current == old --> no-change */
@@ -37,12 +50,17 @@ const throttle = (mainFunction: Function, delay: number) => {
           //   return newState
           // })
           deltas = []
+          invertedDelta = null
         }
         timerFlag = null; 
       }, delay);
     };
+    return {
+      throttledKeyPress,
+      setIgnoredDelta
+    }
   }
 
-  const throttledKeyPress = throttle(() => {}, 500)
+  const {throttledKeyPress, setIgnoredDelta} = throttle(() => {}, 500)
 
-  export default throttledKeyPress
+  export {throttledKeyPress, setIgnoredDelta}
