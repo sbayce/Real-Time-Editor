@@ -317,11 +317,34 @@ const page = () => {
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
     }
     )
+    let listeners: ((event: any) => void)[] = []
     if(editorData.accessType === AccessType.Write){
       quills.map((q, index) => {
         q.off("text-change")
         q.off("selection-change")
-
+        function handleKeyDown(event: any) {
+          const currentSelection = q.getSelection()
+          if(!currentSelection) return
+          const [currentLine] = q.getLine(currentSelection.index)
+          if(event.key === "ArrowDown" && !checkPageSize(q, index)){
+            const lastLine = q.getLines().at(-1)
+            if(currentLine === lastLine && quills[index+1]){
+              setTimeout(() => {
+                quills[index+1].setSelection(0)
+              }, 0)
+            }
+          }
+          if(event.key === "ArrowUp"){
+            const firstLine = q.getLines().at(0)
+            if(currentLine === firstLine && quills[index-1]){
+              setTimeout(() => {
+                quills[index-1].setSelection(quills[index-1].getLength())
+              }, 0)
+            }
+          }
+        }
+        listeners.push(handleKeyDown)
+        q.container.addEventListener("keydown", handleKeyDown)
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
           if (q.getLength() === 1 && quills[index - 1]) {
@@ -338,14 +361,22 @@ const page = () => {
           const shouldRevertChanges = checkPageSize(q, index)
           if(shouldRevertChanges){
             //should cancel the changes and add a new page
-            q.updateContents(delta.invert(oldDelta), 'silent')
-            if (quills[index + 1]) { //switch to page below if it exists
-              setTimeout(() => {
-                q.blur()
-                quills[index + 1].focus()
-              }, 0.1)
-            } else {
-              handleCreateQuill(socket)
+            let isDelete = false
+            delta.ops.forEach(op => {
+              if(op.delete){
+                isDelete = true
+              }
+            })
+            if(!isDelete){
+              q.updateContents(delta.invert(oldDelta), 'silent')
+              if (quills[index + 1]) { //switch to page below if it exists
+                setTimeout(() => {
+                  q.blur()
+                  quills[index + 1].focus()
+                }, 0.1)
+              } else {
+                handleCreateQuill(socket)
+              }
             }
           }else{
             throttledKeyPress(delta, q, index, socket, oldDelta, setPreviousDeltas, setAreChangesSent)
@@ -387,7 +418,6 @@ const page = () => {
           const selectionLength = range.length
           const selectionIndex = range.index
           throttleSelectionChange(selectionIndex, selectionLength, index, socket)
-          // socket.emit("selection-change", {selectionIndex, selectionLength, index})
         })
       })
     }
@@ -396,9 +426,10 @@ const page = () => {
       socket.off("recieve-selection")
       socket.off("page-to-remove")
       socket.off("master-request")
-      quills.map((quill) => {
+      quills.map((quill, i) => {
         quill.off("text-change")
         quill.off("selection-change")
+        quill.container.removeEventListener("keydown", listeners[i])
       })
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
