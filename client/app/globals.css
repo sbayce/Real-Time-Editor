@@ -110,8 +110,9 @@ body {
   margin: 0 4px;
   border-radius: 5px;
 }
-.ql-formats button:hover{
-  background-color: #A6A9B1 !important;
+.ql-formats button:hover {
+  background-color: #c2c4ca !important;
+  border-radius: 0.2rem;
 }
 .ql-toolbar .ql-formats:not(:last-child) {
   border-right: 1px solid #ccc; /* Adjust the color as needed */
