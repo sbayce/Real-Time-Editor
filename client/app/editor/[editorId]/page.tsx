@@ -323,24 +323,32 @@ const page = () => {
         q.off("text-change")
         q.off("selection-change")
         function handleKeyDown(event: any) {
-          const currentSelection = q.getSelection()
-          if(!currentSelection) return
-          const [currentLine] = q.getLine(currentSelection.index)
-          if(event.key === "ArrowDown" && !checkPageSize(q, index)){
-            const lastLine = q.getLines().at(-1)
-            if(currentLine === lastLine && quills[index+1]){
-              setTimeout(() => {
-                quills[index+1].setSelection(0)
-              }, 0)
-            }
-          }
-          if(event.key === "ArrowUp"){
-            const firstLine = q.getLines().at(0)
-            if(currentLine === firstLine && quills[index-1]){
-              setTimeout(() => {
-                quills[index-1].setSelection(quills[index-1].getLength())
-              }, 0)
-            }
+          const currentSelection = q.getSelection();
+          if (!currentSelection) return;
+        
+          const [currentLine] = q.getLine(currentSelection.index);
+          const lastLine = q.getLines().at(-1);
+          const firstLine = q.getLines().at(0);
+        
+          const nextQuill = quills[index + 1];
+          const prevQuill = quills[index - 1];
+        
+          const moveToNextQuill = () => setTimeout(() => nextQuill?.setSelection(0), 0);
+          const moveToPrevQuill = () => setTimeout(() => prevQuill?.setSelection(prevQuill.getLength()), 0);
+        
+          switch (event.key) {
+            case "ArrowDown":
+              if (currentLine === lastLine && !checkPageSize(q, index)) moveToNextQuill();
+              break;
+            case "ArrowRight":
+              if (currentLine === lastLine && currentSelection.index === q.getLength() - 1) moveToNextQuill();
+              break;
+            case "ArrowLeft":
+              if (currentLine === firstLine && currentSelection.index === 0) moveToPrevQuill();
+              break;
+            case "ArrowUp":
+              if (currentLine === firstLine) moveToPrevQuill();
+              break;
           }
         }
         listeners.push(handleKeyDown)
@@ -404,7 +412,7 @@ const page = () => {
             setIsChanged(true)
           }
 
-          updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index)
+          updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index, true)
         })
         q.on("selection-change", (range, oldRange, source) => {
           if ( !range) return
