@@ -11,6 +11,14 @@ const throttle = (mainFunction: Function, delay: number) => {
     const setIgnoredDelta = (value: Delta) => {
       if(timerFlag) invertedDelta = value
     }
+    const cancelThrottle = () => {
+      if(timerFlag){
+        clearTimeout(timerFlag)
+        timerFlag = null
+        deltas = []
+        invertedDelta = null
+      }
+    }
   
     const throttledKeyPress = (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setPreviousDeltas: any, setAreChangesSent: any) => {
       if(!socket) return
@@ -52,15 +60,16 @@ const throttle = (mainFunction: Function, delay: number) => {
           deltas = []
           invertedDelta = null
         }
-        timerFlag = null; 
+        timerFlag = null
       }, delay);
     };
     return {
       throttledKeyPress,
-      setIgnoredDelta
+      setIgnoredDelta,
+      cancelThrottle
     }
   }
 
-  const {throttledKeyPress, setIgnoredDelta} = throttle(() => {}, 500)
+  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(() => {}, 500)
 
-  export {throttledKeyPress, setIgnoredDelta}
+  export {throttledKeyPress, setIgnoredDelta, cancelThrottle}

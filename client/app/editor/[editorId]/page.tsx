@@ -17,11 +17,11 @@ import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
 import { useQueryClient } from "react-query"
 import { Delta } from "quill/core"
-import {throttledKeyPress, setIgnoredDelta} from "@/utils/editor/throttle-key-press"
+import {throttledKeyPress, setIgnoredDelta, cancelThrottle} from "@/utils/editor/throttle-key-press"
 import throttleSelectionChange from "@/utils/editor/throttle-selection-change"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
-import toolbarOptions from "@/app/lib/editor/quil-toolbar"
+import {toolbarOptions, addTooltips} from "@/app/lib/editor/quil-toolbar"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
@@ -177,7 +177,7 @@ const page = () => {
       const toolbar = quillInstance.getModule("toolbar") as { container: HTMLDivElement }
       toolbar.container.style.visibility = "hidden"
     }
-    
+    addTooltips(quillInstance)
     return quillInstance
   }
 
@@ -359,6 +359,7 @@ const page = () => {
             setTimeout(() => {
               q.blur()
               removeQuill(parent, index)
+              cancelThrottle()
               socket.emit("remove-page", index)
               // auto-focus on previous quill (on last index)
               quills[index-1].setSelection(quills[index-1].getLength())
