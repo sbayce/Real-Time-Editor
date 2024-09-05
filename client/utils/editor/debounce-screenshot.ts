@@ -21,18 +21,20 @@ const storeImage = async (img: any, queryClient: QueryClient, editorId: string) 
   }
 
 const captureScreenshot = (queryClient: QueryClient, editorId: string) => {
-    const ql = document.querySelector(".ql-container.ql-snow") as HTMLElement
-    if (!ql) return
+    const quill = document.querySelector(".ql-container.ql-snow") as HTMLElement
+    if (!quill) return
     // hide all cursors to not appear in screenshot
-    const cursors = ql.querySelectorAll(".cursor")
-    const hightlights = ql.querySelectorAll('.highlight')
+    const cursors = quill.querySelectorAll(".cursor")
+    const hightlights = quill.querySelectorAll('.highlight')
     cursors.forEach(cursor => cursor.classList.add('hidden'))
     hightlights.forEach(hightlight => hightlight.classList.add('hidden'))
-    html2canvas(ql, {
+    html2canvas(quill, {
       useCORS: true,
     })
       .then((canvas) => {
-        storeImage(canvas.toDataURL(), queryClient, editorId)
+        // Reduce the image quality to lower the payload size
+        const imageData = canvas.toDataURL('image/jpeg', 0.7); // Reduce quality to 70%
+        storeImage(imageData, queryClient, editorId)
         // add cursors back
         cursors.forEach(cursor => cursor.classList.remove('hidden'))
         hightlights.forEach(hightlight => hightlight.classList.remove('hidden'))
