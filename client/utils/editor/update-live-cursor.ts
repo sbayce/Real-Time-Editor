@@ -14,15 +14,12 @@ const updateLiveCursor = (delta: Delta, selectionProperties: SelectionProperties
     let newStartBounds = selectedQuill.getBounds(newIndex, cursor.length)
     let newEndBounds = selectedQuill.getBounds(newIndex + cursor.length, 0)
     if(newIndex === cursor.index){
-      let newEndIndex = new Delta(delta).transformPosition(cursor.index + cursor.length)
-      console.log("new end index: ", newEndIndex)
+      let newEndIndex = new Delta(delta).transformPosition(cursor.index + cursor.length, priority)
       newEndBounds = selectedQuill.getBounds(newEndIndex, 0)
-      if(newEndIndex > cursor.index + cursor.length){
-        updatedCursors[i].length ++
-      }
-      if(newEndIndex < cursor.index + cursor.length){
-        updatedCursors[i].length --
-      }
+
+      const lengthDifference = newEndIndex - (cursor.index + cursor.length)
+      updatedCursors[i].length += lengthDifference
+      newStartBounds = selectedQuill.getBounds(newIndex, updatedCursors[i].length)
     }
     updatedCursors[i].index = newIndex
     updatedCursors[i].startBounds = newStartBounds
