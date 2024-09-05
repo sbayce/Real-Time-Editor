@@ -2,7 +2,7 @@ import Quill from "quill"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import { Delta } from "quill/core"
 
-const updateLiveCursor = (delta: Delta, selectionProperties: SelectionProperties[] | null, setSelectionProperties: any, selectedQuill: Quill, quillIndex: number) => {
+const updateLiveCursor = (delta: Delta, selectionProperties: SelectionProperties[] | null, setSelectionProperties: any, selectedQuill: Quill, quillIndex: number, priority = false) => {
   if(!selectionProperties) return
   let updatedCursors = [...selectionProperties]
   for(let i =0 ;i< selectionProperties.length; i++){
@@ -10,7 +10,7 @@ const updateLiveCursor = (delta: Delta, selectionProperties: SelectionProperties
     // skip if cursor is not in the same quill
     if(cursor.quillIndex !== quillIndex) continue
 
-    let newIndex = new Delta(delta).transformPosition(cursor.index)
+    let newIndex = new Delta(delta).transformPosition(cursor.index, priority)
     let newStartBounds = selectedQuill.getBounds(newIndex, cursor.length)
     let newEndBounds = selectedQuill.getBounds(newIndex + cursor.length, 0)
     if(newIndex === cursor.index){
