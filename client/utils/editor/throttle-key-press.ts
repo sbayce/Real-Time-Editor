@@ -17,9 +17,9 @@ const throttle = (mainFunction: Function, delay: number) => {
       if(timerFlag){
         if(invertedDelta){
           console.log("--------------IGNORE---------------------")
+          invertedDelta = delta.transform(invertedDelta, true)
           console.log("original delta: ", delta)
           const deltaIgnore = invertedDelta.transform(delta, true)
-          console.log("original delta: ", delta)
           console.log("delta-ignore: ", deltaIgnore)
           deltas.push(deltaIgnore)
         }else{
