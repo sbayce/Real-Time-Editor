@@ -17,11 +17,11 @@ import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
 import { useQueryClient } from "react-query"
 import { Delta } from "quill/core"
-import {throttledKeyPress, setIgnoredDelta} from "@/utils/editor/throttle-key-press"
+import {throttledKeyPress, setIgnoredDelta, cancelThrottle} from "@/utils/editor/throttle-key-press"
 import throttleSelectionChange from "@/utils/editor/throttle-selection-change"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import debounceScreenShot from "@/utils/editor/debounce-screenshot"
-import toolbarOptions from "@/app/lib/editor/quil-toolbar"
+import {toolbarOptions, addTooltips} from "@/app/lib/editor/quil-toolbar"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
@@ -177,7 +177,7 @@ const page = () => {
       const toolbar = quillInstance.getModule("toolbar") as { container: HTMLDivElement }
       toolbar.container.style.visibility = "hidden"
     }
-    
+    addTooltips(quillInstance)
     return quillInstance
   }
 
@@ -280,7 +280,7 @@ const page = () => {
       removeQuill(parent, index)
     })
 
-    socket.on("recieve-changes", ({ delta, index, oldDelta }) => {
+    socket.on("recieve-changes", ({ delta, index, oldDelta } :{ delta: Delta, index: number, oldDelta: Delta}) => {
       console.log("got delta: ", delta.ops, "from index: ", index)
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
@@ -290,23 +290,39 @@ const page = () => {
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
         selectedQuill.updateContents(delta)
+        if(previousDeltas[index]){
+          setPreviousDeltas((prevState) => {
+            const newState = [...prevState]
+            newState[index] = new Delta(delta).transform(newState[index], true)
+            return newState
+          })
+        }
         updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
 
       }else{ 
         // should handle conflicts
         console.log("sender old: ", senderContent)
         console.log("current cont: ", currentContent)
+        console.log("DIFF: ", new Delta(oldDelta).diff(selectedQuill?.getContents()))
+        const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
         let transformed: any
         if(areChangesSent){
-          transformed = previousDeltas[index]?.transform(delta, true)
+          // transformed = previousDeltas[index]?.transform(delta, true)
+          transformed = difference?.transform(delta, true)
         }else{
-          transformed = previousDeltas[index]?.transform(delta, false)
+          // transformed = previousDeltas[index]?.transform(delta, false)
+          transformed = difference?.transform(delta, false)
         }
         console.log("transformed: ", transformed)
         const invertedDelta = transformed.invert(selectedQuill.getContents())
         setIgnoredDelta(invertedDelta)
         selectedQuill.updateContents(transformed)
-
+        
+        setPreviousDeltas((prevState) => {
+          const newState = [...prevState]
+          newState[index] = transformed.transform(newState[index], true)
+          return newState
+        })
         updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
       }  
     })
@@ -359,6 +375,7 @@ const page = () => {
             setTimeout(() => {
               q.blur()
               removeQuill(parent, index)
+              cancelThrottle()
               socket.emit("remove-page", index)
               // auto-focus on previous quill (on last index)
               quills[index-1].setSelection(quills[index-1].getLength())
