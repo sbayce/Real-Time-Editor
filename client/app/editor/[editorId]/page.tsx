@@ -280,7 +280,7 @@ const page = () => {
       removeQuill(parent, index)
     })
 
-    socket.on("recieve-changes", ({ delta, index, oldDelta }) => {
+    socket.on("recieve-changes", ({ delta, index, oldDelta } :{ delta: Delta, index: number, oldDelta: Delta}) => {
       console.log("got delta: ", delta.ops, "from index: ", index)
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
@@ -290,23 +290,39 @@ const page = () => {
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
         selectedQuill.updateContents(delta)
+        if(previousDeltas[index]){
+          setPreviousDeltas((prevState) => {
+            const newState = [...prevState]
+            newState[index] = new Delta(delta).transform(newState[index], true)
+            return newState
+          })
+        }
         updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
 
       }else{ 
         // should handle conflicts
         console.log("sender old: ", senderContent)
         console.log("current cont: ", currentContent)
+        console.log("DIFF: ", new Delta(oldDelta).diff(selectedQuill?.getContents()))
+        const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
         let transformed: any
         if(areChangesSent){
-          transformed = previousDeltas[index]?.transform(delta, true)
+          // transformed = previousDeltas[index]?.transform(delta, true)
+          transformed = difference?.transform(delta, true)
         }else{
-          transformed = previousDeltas[index]?.transform(delta, false)
+          // transformed = previousDeltas[index]?.transform(delta, false)
+          transformed = difference?.transform(delta, false)
         }
         console.log("transformed: ", transformed)
         const invertedDelta = transformed.invert(selectedQuill.getContents())
         setIgnoredDelta(invertedDelta)
         selectedQuill.updateContents(transformed)
-
+        
+        setPreviousDeltas((prevState) => {
+          const newState = [...prevState]
+          newState[index] = transformed.transform(newState[index], true)
+          return newState
+        })
         updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
       }  
     })
