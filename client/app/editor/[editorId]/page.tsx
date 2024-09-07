@@ -521,6 +521,9 @@ const page = () => {
               <DocumentIcon className="w-4" />
               Add page
             </Button>
+            <button onClick={() => {
+              window.print()
+            }}>Save as PDF</button>
           </div>
           <div className="flex gap-10 justify-center pt-40">
             <div id="wrapperRef" ref={wrapperRef} className="relative"></div>
