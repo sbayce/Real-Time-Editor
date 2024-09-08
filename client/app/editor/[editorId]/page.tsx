@@ -27,6 +27,7 @@ import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
 import renderQuills from "@/utils/editor/render-quills"
 import isEqual from 'lodash.isequal'
+import handleKeyDown from "@/utils/editor/key-down-handlers"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -55,7 +56,6 @@ const page = () => {
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[]>([])
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [previousDeltas, setPreviousDeltas] = useState<Delta[]>([])
   const [areChangesSent, setAreChangesSent] = useState(false)
   const queryClient = useQueryClient()
 
@@ -290,39 +290,26 @@ const page = () => {
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
         selectedQuill.updateContents(delta)
-        if(previousDeltas[index]){
-          setPreviousDeltas((prevState) => {
-            const newState = [...prevState]
-            newState[index] = new Delta(delta).transform(newState[index], true)
-            return newState
-          })
-        }
+
         updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
 
       }else{ 
         // should handle conflicts
         console.log("sender old: ", senderContent)
         console.log("current cont: ", currentContent)
-        console.log("DIFF: ", new Delta(oldDelta).diff(selectedQuill?.getContents()))
         const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
+        console.log("DIFF: ", difference)
         let transformed: any
         if(areChangesSent){
-          // transformed = previousDeltas[index]?.transform(delta, true)
           transformed = difference?.transform(delta, true)
         }else{
-          // transformed = previousDeltas[index]?.transform(delta, false)
           transformed = difference?.transform(delta, false)
         }
         console.log("transformed: ", transformed)
         const invertedDelta = transformed.invert(selectedQuill.getContents())
         setIgnoredDelta(invertedDelta)
         selectedQuill.updateContents(transformed)
-        
-        setPreviousDeltas((prevState) => {
-          const newState = [...prevState]
-          newState[index] = transformed.transform(newState[index], true)
-          return newState
-        })
+
         updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
       }  
     })
@@ -338,37 +325,9 @@ const page = () => {
       quills.map((q, index) => {
         q.off("text-change")
         q.off("selection-change")
-        function handleKeyDown(event: any) {
-          const currentSelection = q.getSelection();
-          if (!currentSelection) return;
-        
-          const [currentLine] = q.getLine(currentSelection.index);
-          const lastLine = q.getLines().at(-1);
-          const firstLine = q.getLines().at(0);
-        
-          const nextQuill = quills[index + 1];
-          const prevQuill = quills[index - 1];
-        
-          const moveToNextQuill = () => setTimeout(() => nextQuill?.setSelection(0), 0);
-          const moveToPrevQuill = () => setTimeout(() => prevQuill?.setSelection(prevQuill.getLength()), 0);
-        
-          switch (event.key) {
-            case "ArrowDown":
-              if (currentLine === lastLine && !checkPageSize(q, index)) moveToNextQuill();
-              break;
-            case "ArrowRight":
-              if (currentLine === lastLine && currentSelection.index === q.getLength() - 1) moveToNextQuill();
-              break;
-            case "ArrowLeft":
-              if (currentLine === firstLine && currentSelection.index === 0) moveToPrevQuill();
-              break;
-            case "ArrowUp":
-              if (currentLine === firstLine) moveToPrevQuill();
-              break;
-          }
-        }
-        listeners.push(handleKeyDown)
-        q.container.addEventListener("keydown", handleKeyDown)
+        const keyDownHandler = handleKeyDown(quills, q, index, checkPageSize) //closure
+        listeners.push(keyDownHandler)
+        q.container.addEventListener("keydown", keyDownHandler)
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
           if (q.getLength() === 1 && quills[index - 1]) {
@@ -404,27 +363,12 @@ const page = () => {
               }
             }
           }else{
-            throttledKeyPress(delta, q, index, socket, oldDelta, setPreviousDeltas, setAreChangesSent)
+            throttledKeyPress(delta, q, index, socket, oldDelta, setAreChangesSent)
             if (index === 0) {
               debounceScreenShot(queryClient, editorId)
             }
             if(areChangesSent){
-              setPreviousDeltas((prevState) => {
-                const newState = [...prevState]
-                newState[index] = delta
-                return newState
-              })
               setAreChangesSent(false)
-            }else{
-              setPreviousDeltas((prevState) => {
-                const newState = [...prevState]
-                if(newState[index]){
-                  newState[index] = newState[index].compose(delta)
-                }else{
-                  newState[index] = delta
-                }
-                return newState
-              })
             }
             setIsChanged(true)
           }
@@ -458,7 +402,7 @@ const page = () => {
       })
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas, areChangesSent])
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, areChangesSent])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills) {
@@ -473,7 +417,6 @@ const page = () => {
     }
   }
   console.log(quills)
-  console.log("prev deltas: ", previousDeltas)
   console.log("selection Properties: ", selectionProperties)
 
   const checkPageSize = (quill: Quill, quillIndex: number) => {
