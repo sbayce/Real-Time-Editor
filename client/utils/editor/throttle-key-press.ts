@@ -3,7 +3,7 @@ import { Delta } from "quill/core"
 import { Socket } from "socket.io-client"
 import isEqual from 'lodash.isequal'
 
-const throttle = (mainFunction: Function, delay: number) => {
+const throttle = (delay: number) => {
     let timerFlag: any
     let deltas: Delta[] = []
     let invertedDelta: Delta | null = null
@@ -20,7 +20,7 @@ const throttle = (mainFunction: Function, delay: number) => {
       }
     }
   
-    const throttledKeyPress = (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setPreviousDeltas: any, setAreChangesSent: any) => {
+    const throttledKeyPress = (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setAreChangesSent: any) => {
       if(!socket) return
       if(timerFlag){
         if(invertedDelta){
@@ -48,15 +48,12 @@ const throttle = (mainFunction: Function, delay: number) => {
              current == old --> no-change */
           const currentContent = JSON.parse(JSON.stringify(quill.getContents()))
           const oldContent = JSON.parse(JSON.stringify(oldDelta))
-          if(!isEqual(currentContent, oldContent)){ 
+          const currentChanges = JSON.parse(JSON.stringify(oldDelta.compose(parentDelta)))
+
+          if(!isEqual(currentChanges, oldContent)){ 
             socket.emit("send-changes", { delta: parentDelta, oldDelta, index })
             setAreChangesSent(true)
           }
-          // setPreviousDeltas((prevState: Delta[]) => {
-          //   const newState = [...prevState]
-          //   newState.splice(index, 1)
-          //   return newState
-          // })
           deltas = []
           invertedDelta = null
         }
@@ -70,6 +67,6 @@ const throttle = (mainFunction: Function, delay: number) => {
     }
   }
 
-  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(() => {}, 500)
+  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(3000)
 
   export {throttledKeyPress, setIgnoredDelta, cancelThrottle}
