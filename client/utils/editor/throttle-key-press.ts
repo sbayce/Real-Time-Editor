@@ -67,6 +67,6 @@ const throttle = (delay: number) => {
     }
   }
 
-  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(3000)
+  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(700)
 
   export {throttledKeyPress, setIgnoredDelta, cancelThrottle}
