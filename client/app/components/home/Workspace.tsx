@@ -50,7 +50,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     <>
       {ownedData && (
         <div>
-          <h1 className="text-3xl font-medium mb-4 text-center">
+          <h1 className="text-2xl font-medium mb-4 text-center">
             Your Work
           </h1>
           <div className="grid grid-cols-5 gap-4">
@@ -72,7 +72,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
       )}
       {collaboratedData.length > 0 && (
         <div>
-          <h1 className="text-3xl font-medium mb-4 text-center mt-8">
+          <h1 className="text-2xl font-medium mb-4 text-center mt-8">
             Your Collaboration
           </h1>
           <div className="grid grid-cols-4 gap-4">

@@ -180,8 +180,16 @@ io.on("connection", (socket) => {
     console.log("final rooms: ", roomMap)
     const userMap = roomMap.get(roomId)
     if (userMap) {
-      const userEmails = Array.from(userMap.values())
-      io.to(roomId).emit("online_users", userEmails)
+      let onlineUsers: any = []
+      Array.from(userMap.entries()).forEach(([key, value]) => {
+          onlineUsers.push({
+          socketId: key,
+          email: value.email,
+          username: value.username,
+          color: value.color,
+        })
+      })
+      io.to(roomId).emit("online_users", onlineUsers)
     }
   })
 })

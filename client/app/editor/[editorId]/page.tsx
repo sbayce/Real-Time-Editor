@@ -27,6 +27,8 @@ import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
 import renderQuills from "@/utils/editor/render-quills"
 import isEqual from 'lodash.isequal'
+import handleKeyDown from "@/utils/editor/key-down-handlers"
+import throttleTitleChange from "@/utils/editor/throttle-title-change"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -45,21 +47,21 @@ const handlePageExit = (e: any, socket: Socket, quills: Quill[], isChanged: bool
 }
 
 const page = () => {
-  const [editorData, setEditorData] = useState<Editor | null>(null)
-  const [title, setTitle] = useState(editorData?.title)
+  const [editorData, setEditorData] = useState<Editor | null | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(false)
+  const [title, setTitle] = useState('')
   const [socket, setSocket] = useState<Socket | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
   const [quills, setQuills] = useState<Quill[]>([])
-  const inputRef = useRef<HTMLInputElement>(null)
   const [parent, setParent] = useState()
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[]>([])
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [previousDeltas, setPreviousDeltas] = useState<Delta[]>([])
   const [areChangesSent, setAreChangesSent] = useState(false)
   const queryClient = useQueryClient()
 
   const viewEditor = async () => {
+    setIsLoading(true)
     try {
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/view-editor/${editorId}`,
@@ -70,15 +72,17 @@ const page = () => {
       const data = res.data
       setEditorData(data)
     } catch (error: any) {
+      setEditorData(null)
       console.log(error.message)
     }
+    setIsLoading(false)
   }
-
-  const onTitleSubmit = (event: any) => {
-    if (!socket) return
-    event.preventDefault()
-    socket.emit("send_title", title)
+  const handleTitleChange = (e: any) => {
+    const value = e.target.value
+    throttleTitleChange(value, socket)
+    setTitle(value)
   }
+  
   useEffect(() => {
     viewEditor()
   }, [])
@@ -290,39 +294,26 @@ const page = () => {
       if(isEqual(senderContent, currentContent)){
         console.log("without conflicts")
         selectedQuill.updateContents(delta)
-        if(previousDeltas[index]){
-          setPreviousDeltas((prevState) => {
-            const newState = [...prevState]
-            newState[index] = new Delta(delta).transform(newState[index], true)
-            return newState
-          })
-        }
+
         updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
 
       }else{ 
         // should handle conflicts
         console.log("sender old: ", senderContent)
         console.log("current cont: ", currentContent)
-        console.log("DIFF: ", new Delta(oldDelta).diff(selectedQuill?.getContents()))
         const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
+        console.log("DIFF: ", difference)
         let transformed: any
         if(areChangesSent){
-          // transformed = previousDeltas[index]?.transform(delta, true)
           transformed = difference?.transform(delta, true)
         }else{
-          // transformed = previousDeltas[index]?.transform(delta, false)
           transformed = difference?.transform(delta, false)
         }
         console.log("transformed: ", transformed)
         const invertedDelta = transformed.invert(selectedQuill.getContents())
         setIgnoredDelta(invertedDelta)
         selectedQuill.updateContents(transformed)
-        
-        setPreviousDeltas((prevState) => {
-          const newState = [...prevState]
-          newState[index] = transformed.transform(newState[index], true)
-          return newState
-        })
+
         updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
       }  
     })
@@ -338,53 +329,13 @@ const page = () => {
       quills.map((q, index) => {
         q.off("text-change")
         q.off("selection-change")
-        function handleKeyDown(event: any) {
-          const currentSelection = q.getSelection();
-          if (!currentSelection) return;
-        
-          const [currentLine] = q.getLine(currentSelection.index);
-          const lastLine = q.getLines().at(-1);
-          const firstLine = q.getLines().at(0);
-        
-          const nextQuill = quills[index + 1];
-          const prevQuill = quills[index - 1];
-        
-          const moveToNextQuill = () => setTimeout(() => nextQuill?.setSelection(0), 0);
-          const moveToPrevQuill = () => setTimeout(() => prevQuill?.setSelection(prevQuill.getLength()), 0);
-        
-          switch (event.key) {
-            case "ArrowDown":
-              if (currentLine === lastLine && !checkPageSize(q, index)) moveToNextQuill();
-              break;
-            case "ArrowRight":
-              if (currentLine === lastLine && currentSelection.index === q.getLength() - 1) moveToNextQuill();
-              break;
-            case "ArrowLeft":
-              if (currentLine === firstLine && currentSelection.index === 0) moveToPrevQuill();
-              break;
-            case "ArrowUp":
-              if (currentLine === firstLine) moveToPrevQuill();
-              break;
-          }
-        }
-        listeners.push(handleKeyDown)
-        q.container.addEventListener("keydown", handleKeyDown)
+        const keyDownHandler = handleKeyDown(quills, q, index, exceedsPageSize, removeQuill, cancelThrottle, socket, parent) //closure
+        listeners.push(keyDownHandler)
+        q.container.addEventListener("keydown", keyDownHandler)
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
-          if (q.getLength() === 1 && quills[index - 1]) {
-            setTimeout(() => {
-              q.blur()
-              removeQuill(parent, index)
-              cancelThrottle()
-              socket.emit("remove-page", index)
-              // auto-focus on previous quill (on last index)
-              quills[index-1].setSelection(quills[index-1].getLength())
-            }, 0.1)
-            return
-          }
           // check if new content increased page size beyond threshold
-          const shouldRevertChanges = checkPageSize(q, index)
-          if(shouldRevertChanges){
+          if(exceedsPageSize(q, index)){
             //should cancel the changes and add a new page
             let isDelete = false
             delta.ops.forEach(op => {
@@ -404,27 +355,12 @@ const page = () => {
               }
             }
           }else{
-            throttledKeyPress(delta, q, index, socket, oldDelta, setPreviousDeltas, setAreChangesSent)
+            throttledKeyPress(delta, q, index, socket, oldDelta, setAreChangesSent)
             if (index === 0) {
               debounceScreenShot(queryClient, editorId)
             }
             if(areChangesSent){
-              setPreviousDeltas((prevState) => {
-                const newState = [...prevState]
-                newState[index] = delta
-                return newState
-              })
               setAreChangesSent(false)
-            }else{
-              setPreviousDeltas((prevState) => {
-                const newState = [...prevState]
-                if(newState[index]){
-                  newState[index] = newState[index].compose(delta)
-                }else{
-                  newState[index] = delta
-                }
-                return newState
-              })
             }
             setIsChanged(true)
           }
@@ -458,7 +394,7 @@ const page = () => {
       })
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, previousDeltas, areChangesSent])
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, areChangesSent])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills) {
@@ -473,10 +409,9 @@ const page = () => {
     }
   }
   console.log(quills)
-  console.log("prev deltas: ", previousDeltas)
   console.log("selection Properties: ", selectionProperties)
 
-  const checkPageSize = (quill: Quill, quillIndex: number) => {
+  const exceedsPageSize = (quill: Quill, quillIndex: number) => {
     if (!quill || !quills || !socket) return
 
     let pageSize = quill.root.clientHeight
@@ -493,24 +428,17 @@ const page = () => {
   const editorId = usePathname().split("/")[2]
   return (
     <div>
-      {editorData ? (
+      {isLoading && <p className="text-center text-lg">Loading...</p>}
+      {editorData === null && <div className="flex flex-col gap-2 items-center mt-10"><img className="w-20" src="/lock.png" alt="lock-img" /><p className="text-lg m-auto">You do not have access to this document.</p></div>}
+      {editorData && (
         <div className="py-2">
           <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">
           {isSaving && <p>Saving...</p>}
-            <form
-              onSubmit={onTitleSubmit}
-              className="self-start flex justify-between left-2 fixed"
-            >
-              
               <input
-                ref={inputRef}
                 value={title}
-                className="bg-transparent hover:bg-none text-xl mr-2"
-                onChange={(e) => {
-                  setTitle(e.target.value)
-                }}
+                className="self-start flex justify-between left-2 fixed bg-transparent hover:bg-none text-xl mr-2 mx-8"
+                onChange={handleTitleChange}
               />
-            </form>
             <InviteModal />
             <Button
               radius="sm"
@@ -521,15 +449,18 @@ const page = () => {
               <DocumentIcon className="w-4" />
               Add page
             </Button>
+            <button onClick={() => {
+              window.print()
+            }}>Save as PDF</button>
           </div>
           <div className="flex gap-10 justify-center pt-40">
             <div id="wrapperRef" ref={wrapperRef} className="relative"></div>
             <div className="flex flex-col gap-2 w-56 absolute right-16">
               <h1>Online Collaborators</h1>
               {onlineUsers &&
-                onlineUsers.map((user: any) => {
+                onlineUsers.map((user: OnlineUser) => {
                   return (
-                    <Chip variant="light">
+                    <Chip key={user.socketId} variant="light">
                       <div className="flex items-center gap-1">
                         <Avatar
                           size="sm"
@@ -546,8 +477,6 @@ const page = () => {
             </div>
           </div>
         </div>
-      ) : (
-        <p>Cannot view</p>
       )}
     </div>
   )
