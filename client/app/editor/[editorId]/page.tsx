@@ -334,6 +334,7 @@ const page = () => {
         q.container.addEventListener("keydown", keyDownHandler)
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
+          console.log(q.getContents())
           // check if new content increased page size beyond threshold
           if(exceedsPageSize(q, index)){
             //should cancel the changes and add a new page
@@ -449,8 +450,28 @@ const page = () => {
               <DocumentIcon className="w-4" />
               Add page
             </Button>
-            <button onClick={() => {
-              window.print()
+            <button onClick={async() => {
+              // const delta = quills[0].getContents()
+              const delta = getEditorContent(quills)
+              console.log("all content:", delta)
+              const response = await fetch(`/editor/${editorId}/pdf`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ delta }),
+              });
+              if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'editor-content.pdf');
+                document.body.appendChild(link);
+                link.click();
+              } else {
+                console.error('Failed to generate PDF');
+              }
             }}>Save as PDF</button>
           </div>
           <div className="flex gap-10 justify-center pt-40">
