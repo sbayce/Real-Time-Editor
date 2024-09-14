@@ -30,7 +30,7 @@ Font.register({
 })
 
 // Create styles
-const styles = StyleSheet.create({
+const styles: any = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
@@ -81,8 +81,8 @@ const parseDeltaToPDFContent = (delta: Delta) => {
     // if (attributes.font) style.fontFamily = attributes.font;
 
     // Handle lists. Check is the next op contains a 'list' attribute
-    if (delta.ops[index+1] && delta.ops[index+1].attributes && delta.ops[index+1].attributes.list) {
-      if (currentListType && currentListType !== delta.ops[index+1].attributes.list) {
+    if (delta.ops[index+1] && delta.ops[index+1].attributes && delta.ops[index+1]?.attributes?.list) {
+      if (currentListType && currentListType !== delta.ops[index+1]?.attributes?.list) {
         // If the list type changes, push the current list items and reset
         elements.push(
           <Text key={`list-${index}`} style={{}}>
@@ -91,7 +91,7 @@ const parseDeltaToPDFContent = (delta: Delta) => {
         );
         listItems = [];
       }
-      currentListType = delta.ops[index+1].attributes.list;
+      currentListType = delta.ops[index+1]?.attributes?.list as ListType | null
     } else {
       if (currentListType) {
         // If exiting a list, push the current list items and reset
@@ -105,8 +105,8 @@ const parseDeltaToPDFContent = (delta: Delta) => {
       }
     }
 
-    if (delta.ops[index+1] && delta.ops[index+1].attributes && delta.ops[index+1].attributes.align) {
-        style.textAlign = delta.ops[index+1].attributes.align
+    if (delta.ops[index+1] && delta.ops[index+1].attributes && delta.ops[index+1]?.attributes?.align) {
+        style.textAlign = delta.ops[index+1]?.attributes?.align
     }
 
     if (typeof insert === 'object' && insert.image) {
@@ -118,7 +118,7 @@ const parseDeltaToPDFContent = (delta: Delta) => {
       currentLine = [];
       // Insert is an image object
       elements.push(
-        <Image key={index} src={insert.image} style={styles.image} />
+        <Image key={index} src={insert.image as string} style={styles.image} />
       );
     }else if (typeof insert === 'string' && (!attributes?.list || !attributes?.align)) { // ignore attributes of 'list' (already addressed in previous iteration)
       // Split the string by newlines to handle multi-line text
@@ -141,16 +141,6 @@ const parseDeltaToPDFContent = (delta: Delta) => {
                 <Text style={style}>{fragment}</Text> {/* Text content */}
               </Text>
             );
-            // listItems.push(
-            //   <Text key={`${index}-${i}`}  style={styles.list}>
-            //     {'\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'}{bullet}
-            //   </Text>
-            // );
-            // listItems.push(
-            //   <Text key={`${index}-${i}`} style={style}>
-            //     {fragment}
-            //   </Text>
-            // )
           }else {
             // Add each fragment with its style to the current line
             console.log("current line style: ", style)
@@ -212,7 +202,7 @@ const parseDeltaToPDFContent = (delta: Delta) => {
 
 
 // Create Document Component
-const MyDocument = ({ pagesContent }) => (
+const MyDocument = ({ pagesContent }: {pagesContent: any[]}) => (
   <Document>
     {pagesContent.map(content => 
       <Page size="A4" style={styles.page}>
