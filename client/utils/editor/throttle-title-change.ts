@@ -12,7 +12,7 @@ const throttle = (delay: number) => {
         currentValue = value
 
       timerFlag = setTimeout(() => { 
-        socket.emit("send_title", currentValue);
+        socket.emit("send:title", currentValue);
         timerFlag = null; 
         currentValue = ""
       }, delay);

@@ -42,7 +42,7 @@ const handlePageExit = (e: any, socket: Socket, quills: Quill[], isChanged: bool
     e.preventDefault()
     e.returnValue = true
     const content = getEditorContent(quills)
-    socket.emit("save-editor", content)
+    socket.emit("save:editor", content)
   }
 }
 
@@ -100,7 +100,7 @@ const page = () => {
       transports: ['websocket']
     })
     setSocket(socket)
-    socket.on("recieve-master", (content) => {
+    socket.on("recieve:master", (content) => {
       console.log("recieved from master: ", content)
       if(content){
         console.log("Loaded from Master")
@@ -110,25 +110,25 @@ const page = () => {
         renderQuills(editorData.content, handleCreateQuill, loadQuill, socket)
       }
     })
-    socket.emit("request-latest")
+    socket.emit("request:latest")
     setTitle(editorData.title)
     return () => {
-      socket.off("recieve-master")
+      socket.off("recieve:master")
     }
   }, [editorData, parent])
 
   useEffect(() => {
     if (!socket || !parent) return
 
-    socket.on("online_users", (data) => {
+    socket.on("online:users", (data) => {
       setOnlineUsers(data)
     })
-    socket.on("recieve-page", ({ index }) => {
+    socket.on("recieve:page", ({ index }) => {
       console.log("revieved new page")
       const newQuill = initializeQuill(parent, index)
       setQuills((prev: any) => [...prev, newQuill])
     })
-    socket.on("recieve_title", (title) => {
+    socket.on("recieve:title", (title) => {
       setTitle(title)
     })
 
@@ -176,7 +176,6 @@ const page = () => {
       theme: "snow",
       modules: { toolbar: toolbarOptions, history: { userOnly: true } },
     })
-
     if(editorData?.accessType === AccessType.Read || id !== '0'){
       const toolbar = quillInstance.getModule("toolbar") as { container: HTMLDivElement }
       toolbar.container.style.visibility = "hidden"
@@ -237,7 +236,7 @@ const page = () => {
         newQuill.focus()
       }, 0)
       setQuills((prev: any) => [...prev, newQuill])
-      socket.emit("add-page", { index })
+      socket.emit("add:page", { index })
     }
   }
 
@@ -248,7 +247,7 @@ const page = () => {
       if(isChanged){
         setIsSaving(true)
         const content = getEditorContent(quills)
-        socket.emit("save-editor", content)
+        socket.emit("save:editor", content)
         setIsChanged(false)
         setTimeout(() => {
           setIsSaving(false)
@@ -270,13 +269,13 @@ const page = () => {
 
     window.addEventListener("beforeunload", handleBeforeUnload)
     
-    socket.on("master-request", (requestingSocket) => {
+    socket.on("master:request", (requestingSocket) => {
       console.log("master request here.")
       const content = getEditorContent(quills)
-      socket.emit("send-master-content", {content, requestingSocket})
+      socket.emit("send:master:content", {content, requestingSocket})
     })
 
-    socket.on("page-to-remove", (index) => {
+    socket.on("page:to:remove", (index) => {
       if (!quills[index - 1]) return
       if(quills[index].hasFocus()){
         quills[index - 1].focus()
@@ -284,7 +283,7 @@ const page = () => {
       removeQuill(parent, index)
     })
 
-    socket.on("recieve-changes", ({ delta, index, oldDelta } :{ delta: Delta, index: number, oldDelta: Delta}) => {
+    socket.on("recieve:changes", ({ delta, index, oldDelta } :{ delta: Delta, index: number, oldDelta: Delta}) => {
       console.log("got delta: ", delta.ops, "from index: ", index)
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
@@ -318,7 +317,7 @@ const page = () => {
       }  
     })
 
-    socket.on("recieve-selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
+    socket.on("recieve:selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
       const selectedQuill = quills[index]
       selectionLength > 0 && console.log("recieved selection: ", selectedQuill.getText(selectionIndex, selectionLength))
       changeCursorPosition(selectionIndex, selectionLength, selectedQuill, selectionProperties, senderSocket, index, setSelectionProperties)
@@ -334,6 +333,7 @@ const page = () => {
         q.container.addEventListener("keydown", keyDownHandler)
         q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
           if (source !== "user") return
+          console.log(q.getContents())
           // check if new content increased page size beyond threshold
           if(exceedsPageSize(q, index)){
             //should cancel the changes and add a new page
@@ -383,10 +383,11 @@ const page = () => {
       })
     }
     return () => {
-      socket.off("recieve-changes")
-      socket.off("recieve-selection")
-      socket.off("page-to-remove")
-      socket.off("master-request")
+      socket.off("recieve:changes")
+      socket.off("recieve:selection")
+      socket.off("page:to:remove")
+      socket.off("master:request")
+      socket.off("DB:update")
       quills.map((quill, i) => {
         quill.off("text-change")
         quill.off("selection-change")
@@ -424,34 +425,67 @@ const page = () => {
     }
     return false
   }
-
+  console.log("content:", getEditorContent(quills))
   const editorId = usePathname().split("/")[2]
   return (
     <div>
       {isLoading && <p className="text-center text-lg">Loading...</p>}
       {editorData === null && <div className="flex flex-col gap-2 items-center mt-10"><img className="w-20" src="/lock.png" alt="lock-img" /><p className="text-lg m-auto">You do not have access to this document.</p></div>}
       {editorData && (
+        <>
+        <div className="fixed top-0 right-20 z-20 pt-4 px-6 flex justify-between items-center gap-4">
+        {isSaving && <p>Saving...</p>}
+        <div className="flex gap-4 items-center">
+          <InviteModal />
+          <Button
+            radius="sm"
+            variant="flat"
+            className="pt-0 px-2 text-white bg-black text-sm gap-1"
+            onClick={() => handleCreateQuill(socket)}
+          >
+            <DocumentIcon className="w-4" />
+            Add page
+          </Button>
+          <Button
+          variant="flat"
+          color="danger"
+          radius="sm"
+          className="text-white bg-black"
+            onClick={async () => {
+              const delta = getEditorContent(quills);
+              console.log("all content:", delta);
+              const response = await fetch(`/editor/${editorId}/pdf`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ delta }),
+              });
+              if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'editor-content.pdf');
+                document.body.appendChild(link);
+                link.click();
+              } else {
+                console.error('Failed to generate PDF');
+              }
+            }}
+          >
+            Download PDF
+          </Button>
+        </div>
+      </div>
         <div className="py-2">
           <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">
-          {isSaving && <p>Saving...</p>}
               <input
                 value={title}
-                className="self-start flex justify-between left-2 fixed bg-transparent hover:bg-none text-xl mr-2 mx-8"
+                className="self-start flex justify-between left-2 fixed bg-transparent hover:bg-none text-xl mr-2 mx-8 top-12"
                 onChange={handleTitleChange}
               />
-            <InviteModal />
-            <Button
-              radius="sm"
-              variant="ghost"
-              color="primary"
-              onClick={() => handleCreateQuill(socket)}
-            >
-              <DocumentIcon className="w-4" />
-              Add page
-            </Button>
-            <button onClick={() => {
-              window.print()
-            }}>Save as PDF</button>
+                 
           </div>
           <div className="flex gap-10 justify-center pt-40">
             <div id="wrapperRef" ref={wrapperRef} className="relative"></div>
@@ -477,7 +511,7 @@ const page = () => {
             </div>
           </div>
         </div>
-      )}
+        </>)}
     </div>
   )
 }

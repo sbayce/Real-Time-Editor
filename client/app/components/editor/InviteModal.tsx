@@ -49,9 +49,9 @@ const InviteModal = () => {
       <Button
         onPress={onOpen}
         radius="sm"
-        variant="ghost"
-        color="primary"
-        className="gap-1"
+        variant="flat"
+        color="default"
+        className="p-0 text-white bg-black gap-1"
       >
         <PeopleIcon className="w-4" />
         Invite
