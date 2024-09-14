@@ -97,14 +97,6 @@ body {
 .hidden {
   visibility: hidden;
 }
-/* @keyframes blink {
-  from, to {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-} */
 
 .ql-formats button{
   margin: 0 4px;
@@ -120,8 +112,9 @@ body {
   padding-right: 10px; /* Space between the buttons and the separator */
 }
 .ql-toolbar {
-  /* padding-top: 100px; */
-  /* margin: 1rem; */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   width: 100%;
   height: 150px;
   position: fixed;
@@ -131,11 +124,15 @@ body {
   background-color: #f3f3f3;
   border: none !important;
   border-bottom: 1px solid #878b91 !important;
-  /* box-shadow: 0 0 0 0 rgba(0, 0, 0, .5); */
-  display: flex;
   align-items: flex-end;
   padding-bottom: 5px;
   padding-left: 20px !important;
+}
+@media (max-width: 1586px) { /* Adjust the breakpoint as needed */
+  .ql-toolbar {
+    padding-top: 100px !important;
+    justify-content: center;
+  }
 }
 @page {
   margin: 1in;
