@@ -20,7 +20,7 @@ const handleKeyDown = (quills: Quill[], q: Quill, index: number, exceedsPageSize
             q.blur()
             removeQuill(parent, index)
             cancelThrottle()
-            socket.emit("remove-page", index)
+            socket.emit("remove:page", index)
             prevQuill.setSelection(prevQuill.getLength())
         }, 0)
     
