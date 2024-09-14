@@ -3,6 +3,8 @@ import { Server } from "socket.io"
 import express from "express"
 import pool from "../db"
 import redisClient from "../redis"
+import Delta, {Op} from "quill-delta"
+import cloudinary from "../lib/cloudinary"
 
 const app = express()
 const server = http.createServer(app)
@@ -80,10 +82,10 @@ io.on("connection", (socket) => {
       })
     })
     console.log("online users: ", onlineUsers)
-    io.to(roomId).emit("online_users", onlineUsers)
+    io.to(roomId).emit("online:users", onlineUsers)
   }
 
-  socket.on("save-editor", async (content) => {
+  socket.on("save:editor", async (content) => {
     console.log("save request from:", socket.id)
     await pool.query("UPDATE editor SET content = $1, updated_at = $2 WHERE id = $3", [
       content,
@@ -92,49 +94,81 @@ io.on("connection", (socket) => {
     ])
   })
 
-  socket.on("request-latest", () => {
+  socket.on("request:latest", () => {
     if(masterSocket && socket.id !== masterSocket){
-      io.to(masterSocket).emit("master-request", socket.id)
+      io.to(masterSocket).emit("master:request", socket.id)
     }else if(!masterSocket || (masterSocket && masterSocket === socket.id)){
-      io.to(socket.id).emit("recieve-master", false)
+      io.to(socket.id).emit("recieve:master", false)
     }
   })
 
-  socket.on("send-master-content", ({content, requestingSocket}) => {
-    io.to(requestingSocket).emit("recieve-master", content)
+  socket.on("send:master:content", ({content, requestingSocket}) => {
+    io.to(requestingSocket).emit("recieve:master", content)
   })
 
-  socket.on("send-changes", ({ delta, oldDelta, index }) => {
+  socket.on("send:changes", async ({ delta, oldDelta, index } : {delta: Delta, oldDelta: Delta, index: number}) => {
     console.log("index is: ", index)
-    console.log("old is: ", oldDelta)
 
-    // index represents page. Set content of a certain page
+    socket.broadcast.to(roomId).emit("recieve:changes", { delta, index, oldDelta })
+    console.log("Delta before: ", delta)
+    let containsImage = false
+    let baseDelta
+    let invertDelta
+    // Create an array to hold promises for image uploads
+    const uploadPromises = delta.ops.map(async (op: Op, idx: number) => {
+      if (op.insert && typeof op.insert === 'object' && 'image' in op.insert) {
+          containsImage = true
+          baseDelta = new Delta(oldDelta).compose(delta)
+          invertDelta = new Delta(delta).invert(baseDelta)
+          const img = (op.insert as { image: string }).image;
+          try {
+              const result = await cloudinary.uploader.upload(img, { public_id: `${roomId}:${index}` });
+              console.log("b4:", op.insert);
+              delta.ops[idx].insert = { image: result.secure_url };
+              console.log("updated delta:", delta.ops[idx].insert);
+          } catch (error) {
+              console.error("Image upload failed:", error);
+          }
+      }
+    });
+    if(containsImage){
+      console.log("contains img")
+      // Wait for all image uploads to complete
+      await Promise.all(uploadPromises);
 
-    // redisClient.json.set(`editor:${roomId}`, `$.content.${index}`, content)
-    socket.broadcast.to(roomId).emit("recieve-changes", { delta, index, oldDelta })
+      invertDelta = new Delta(invertDelta).compose(delta)
+      const updatedContent = new Delta(oldDelta).compose(delta);
+      console.log("old: ", oldDelta);
+      console.log("delta: ", delta);
+      try {
+          io.to(roomId).emit("recieve:changes", { delta: invertDelta, index, oldDelta: baseDelta })
+      } catch (error) {
+          console.error("Database update failed:", error);
+      }
+      }
   })
 
   // listen to new pages added
-  socket.on("add-page", ({ index }) => {
-    socket.broadcast.to(roomId).emit("recieve-page", { index })
+  socket.on("add:page", ({ index }) => {
+    socket.broadcast.to(roomId).emit("recieve:page", { index })
   })
 
-  socket.on("remove-page", (index) => {
+  socket.on("remove:page", (index) => {
     // redisClient.json.del(`editor:${roomId}`, `$.content.${index}`) // remove page from redis
-    socket.broadcast.to(roomId).emit("page-to-remove", index)
+    socket.broadcast.to(roomId).emit("page:to:remove", index)
   })
 
-  socket.on("selection-change", ({ selectionIndex, selectionLength, index }) => {
-    socket.broadcast.to(roomId).emit("recieve-selection", { selectionIndex, selectionLength, index, senderSocket: socket.id })
+  socket.on("selection:change", ({ selectionIndex, selectionLength, index }) => {
+    socket.broadcast.to(roomId).emit("recieve:selection", { selectionIndex, selectionLength, index, senderSocket: socket.id })
   })
 
-  socket.on("send_title", async (title) => {
+  socket.on("send:title", async (title) => {
     await pool.query("UPDATE editor SET title = $1 WHERE id = $2", [
       title,
       roomId,
     ])
     // redisClient.json.set(`editor:${roomId}`, `$.title`, title)
-    socket.broadcast.to(roomId).emit("recieve_title", title)
+    socket.broadcast.to(roomId).emit("recieve:title", title)
   })
 
   socket.on("disconnect", async () => {
@@ -154,23 +188,6 @@ io.on("connection", (socket) => {
         }
       }
       if (currentRoomMap.size === 0) {
-        let updatedContent: any = await redisClient.json.get(
-          `editor:${roomId}`,
-          {
-            path: "$.content",
-          }
-        )
-        if (updatedContent) {
-          // check incase cache expires
-          // Convert content to JSON string because postgres accepts JSON strings
-          updatedContent = updatedContent[0] //remove unnecessary wrapper array
-          console.log("alo: ", updatedContent)
-          const jsonContent = JSON.stringify(updatedContent)
-          await pool.query("UPDATE editor SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", [
-            jsonContent,
-            roomId,
-          ])
-        }
         // delete room if its empty
         roomMap.delete(roomId)
       } else {
@@ -189,7 +206,7 @@ io.on("connection", (socket) => {
           color: value.color,
         })
       })
-      io.to(roomId).emit("online_users", onlineUsers)
+      io.to(roomId).emit("online:users", onlineUsers)
     }
   })
 })
