@@ -132,6 +132,19 @@ body {
   .ql-toolbar {
     padding-top: 100px !important;
     justify-content: center;
+    height: 155px !important;
+  }
+}
+@media (max-width: 819px) { /* Adjust the breakpoint as needed */
+  .ql-toolbar {
+    padding-bottom: 80px !important;
+    height: 160px !important;
+  }
+}
+@media (max-width: 637px) { /* Adjust the breakpoint as needed */
+  .ql-toolbar {
+    padding-bottom: 100px !important;
+    /* height: 170px !important; */
   }
 }
 @page {

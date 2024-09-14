@@ -440,7 +440,7 @@ const page = () => {
           <Button
             radius="sm"
             variant="flat"
-            className="pt-0 px-2 bg-slate-300 text-black text-sm gap-1"
+            className="pt-0 px-2 text-white bg-black text-sm gap-1"
             onClick={() => handleCreateQuill(socket)}
           >
             <DocumentIcon className="w-4" />
@@ -450,7 +450,7 @@ const page = () => {
           variant="flat"
           color="danger"
           radius="sm"
-          className="text-black"
+          className="text-white bg-black"
             onClick={async () => {
               const delta = getEditorContent(quills);
               console.log("all content:", delta);

@@ -2,16 +2,9 @@
 import React from "react"
 import axios from "axios"
 import Workspace from "../components/home/Workspace"
-import { useEffect, useState } from "react"
 import { useQuery } from "react-query"
 
-type WorkSpace = {
-  owned: any
-  collaborated: any
-}
-
 const Home = () => {
-  const [workSpace, setWorkSpace] = useState<WorkSpace | null>(null)
 
   const getWorkspace = async () => {
     try {
@@ -26,11 +19,8 @@ const Home = () => {
   const {data, isLoading} = useQuery("get-workSpace", getWorkspace)
   
   console.log(data)
-  // owned = owned.length === 0? null : owned
-  // collaborated = collaborated.length === 0? null : collaborated
   return (
-    <div className="py-8 px-80">
-      {/* <h1 className="text-lg font-medium mb-2">Your documents</h1> */}
+    <div className="py-8 xs:px-2 sm:px-10 md:px-20 lg:px-40 xl:px-80">
       {data && <Workspace owned={data.owned} collaborated={data.collaborated} />}
     </div>
   )

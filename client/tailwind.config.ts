@@ -22,6 +22,13 @@ const config: Config = {
         lexend: ['var(--font-lexend)']
       }
     },
+    screens: {
+      'xl': '1790px',
+      'lg': '1520px',
+      'md': '1080px',
+      'sm': '720px',
+      'xs': '570px'
+    }
   },
   darkMode: "class",
   plugins: [nextui({
