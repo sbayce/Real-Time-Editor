@@ -19,12 +19,12 @@ const throttle = (delay: number) => {
         updatedIndex = index
 
       timerFlag = setTimeout(() => { 
-        socket.emit("selection-change", {selectionIndex: updatedSelectionIndex, selectionLength: updatedSelectionLength, index: updatedIndex})
+        socket.emit("selection:change", {selectionIndex: updatedSelectionIndex, selectionLength: updatedSelectionLength, index: updatedIndex})
         timerFlag = null; 
       }, delay);
     };
   }
 
-  const throttleSelectionChange = throttle(700)
+  const throttleSelectionChange = throttle(500)
 
   export default throttleSelectionChange

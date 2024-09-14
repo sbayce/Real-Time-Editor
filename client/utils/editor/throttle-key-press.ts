@@ -51,7 +51,7 @@ const throttle = (delay: number) => {
           const currentChanges = JSON.parse(JSON.stringify(oldDelta.compose(parentDelta)))
 
           if(!isEqual(currentChanges, oldContent)){ 
-            socket.emit("send-changes", { delta: parentDelta, oldDelta, index })
+            socket.emit("send:changes", { delta: parentDelta, oldDelta, index })
             setAreChangesSent(true)
           }
           deltas = []
@@ -67,6 +67,6 @@ const throttle = (delay: number) => {
     }
   }
 
-  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(700)
+  const {throttledKeyPress, setIgnoredDelta, cancelThrottle} = throttle(500)
 
   export {throttledKeyPress, setIgnoredDelta, cancelThrottle}
