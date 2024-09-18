@@ -302,13 +302,68 @@ const page = () => {
         console.log("current cont: ", currentContent)
         const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
         console.log("DIFF: ", difference)
+        // Extract text from Deltas
+        const senderText = new Delta(oldDelta).reduce((acc, op) => acc + (op.insert || ''), '');
+        const receiverText = selectedQuill?.getContents().reduce((acc, op) => acc + (op.insert || ''), '');
+
+        // Split into lines
+        const senderLines = senderText.split('\n');
+        const receiverLines = receiverText.split('\n');
+        console.log(senderLines);
+        console.log(receiverLines);
+
+        // Prepare an empty delta to store the final result
+        let finalDelta = new Delta();
+        let totalChars = 0; // Track the total number of characters processed
+
+        // Diff each line and combine the deltas
+        for (let i = 0; i < senderLines.length || i < receiverLines.length; i++) {
+          const senderLine = senderLines[i] || '';
+          const receiverLine = receiverLines[i] || '';
+          
+          const lineDiff = new Delta([{ insert: senderLine }]).diff(new Delta([{ insert: receiverLine }]));
+          
+          // Retain the total number of characters from previous lines
+          if (totalChars > 0) {
+            finalDelta.retain(totalChars);
+          }
+          
+          // Add the line difference to the final delta
+          if (lineDiff.ops.length > 0) {
+            finalDelta = finalDelta.concat(lineDiff);
+          }
+          
+          // Update the total character count to include the current line and newline character
+          totalChars += senderLine.length // +1 for the newline character
+
+          // Add retain for newline only if it's not the last line
+          if (i < Math.max(senderLines.length, receiverLines.length) - 1) {
+            finalDelta.retain(1); // retain for the newline character
+          }
+        }
+
+        // Check and remove unnecessary retains at the end of the delta
+        while (finalDelta.ops.length > 0 && finalDelta.ops[finalDelta.ops.length - 1].retain !== undefined) {
+          finalDelta.ops.pop(); // Remove the last retain if it's unnecessary
+        }
+
+        console.log(finalDelta);
+        let actualTransform: any
         let transformed: any
         if(areChangesSent){
           transformed = difference?.transform(delta, true)
+          actualTransform = finalDelta?.transform(delta, true)
         }else{
           transformed = difference?.transform(delta, false)
+          actualTransform = finalDelta?.transform(delta, false)
         }
         console.log("transformed: ", transformed)
+        console.log("actual transform: ", actualTransform);
+        // const invertedDelta = actualTransform.invert(selectedQuill.getContents())
+        // setIgnoredDelta(invertedDelta)
+        // selectedQuill.updateContents(actualTransform)
+
+        // updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
         const invertedDelta = transformed.invert(selectedQuill.getContents())
         setIgnoredDelta(invertedDelta)
         selectedQuill.updateContents(transformed)
