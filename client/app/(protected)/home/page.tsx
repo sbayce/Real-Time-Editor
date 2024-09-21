@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
 import axios from "axios"
-import Workspace from "../components/home/Workspace"
+import Workspace from "@/app/components/home/Workspace"
 import { useQuery } from "react-query"
 
 const Home = () => {
