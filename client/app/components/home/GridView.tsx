@@ -74,7 +74,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
             onClick={() => {
               router.push(`/editor/${editor.id}`)
             }}
-            className="rounded-sm flex flex-col cursor-pointer w-[208px] border hover:border-gray-300"
+            className="rounded-sm flex flex-col cursor-pointer w-[208px] border hover:border-gray-400"
           >
             <Image
               src={editor.snap_shot ? editor.snap_shot : "./img.jfif"}

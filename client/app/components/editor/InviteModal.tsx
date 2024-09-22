@@ -80,7 +80,7 @@ const InviteModal = () => {
                 />
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="flat" onPress={onClose}>
+                <Button className="bg-black text-white rounded-md" variant="flat" onPress={onClose}>
                   Close
                 </Button>
                 <Button color="primary" onClick={handleInvite} type="submit">
