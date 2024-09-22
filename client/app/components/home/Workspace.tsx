@@ -53,10 +53,10 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
           <h1 className="text-2xl font-medium mb-4 text-center">
             Your Work
           </h1>
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <button
               onClick={createEditor}
-              className="flex justify-center items-center border rounded-sm w-[208px] h-[23.5rem] hover:border-gray-300"
+              className="flex justify-center items-center border rounded-sm w-[208px] h-[20.5rem] hover:border-gray-400"
             >
               <AddIcon className="w-14" />
             </button>

@@ -31,6 +31,9 @@ import isEqual from 'lodash.isequal'
 import handleKeyDown from "@/utils/editor/key-down-handlers"
 import throttleTitleChange from "@/utils/editor/throttle-title-change"
 import calcLinesDiff from "@/utils/delta/calc-lines-diff"
+import OnlineUsersModal from "@/app/components/editor/OnlineUsersModal"
+import OnlineUsersList from "@/app/components/editor/OnlineUsersList"
+import {useMediaQuery} from 'react-responsive'
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -61,6 +64,7 @@ const page = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [areChangesSent, setAreChangesSent] = useState(false)
   const queryClient = useQueryClient()
+  const isMdOrLarger = useMediaQuery({minWidth: 1287})
 
   const viewEditor = async () => {
     setIsLoading(true)
@@ -497,6 +501,7 @@ const page = () => {
           >
             Download PDF
           </Button>
+          <OnlineUsersModal onlineUsers={onlineUsers} />
         </div>
       </div>
         <div className="py-2">
@@ -508,28 +513,9 @@ const page = () => {
               />
                  
           </div>
-          <div className="flex gap-10 justify-center pt-40">
+          <div className="flex gap-10 sm:justify-center justify-start pt-40">
             <div id="wrapperRef" ref={wrapperRef} className="relative"></div>
-            <div className="flex flex-col gap-2 w-56 absolute right-16">
-              <h1>Online Collaborators</h1>
-              {onlineUsers &&
-                onlineUsers.map((user: OnlineUser) => {
-                  return (
-                    <Chip key={user.socketId} variant="light">
-                      <div className="flex items-center gap-1">
-                        <Avatar
-                          size="sm"
-                          style={{ borderColor: user.color }}
-                          className="border-2 w-6 h-6"
-                          name={user.username}
-                          getInitials={(name) => name.charAt(0)}
-                        />
-                        {user.username}
-                      </div>
-                    </Chip>
-                  )
-                })}
-            </div>
+              {onlineUsers && isMdOrLarger && <OnlineUsersList onlineUsers={onlineUsers} />}
           </div>
         </div>
         </>)}
