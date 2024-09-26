@@ -63,6 +63,7 @@ const page = () => {
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [areChangesSent, setAreChangesSent] = useState(false)
+  const [isMaster, setIsMaster] = useState(false)
   const queryClient = useQueryClient()
   const isMdOrLarger = useMediaQuery({minWidth: 1287})
 
@@ -115,6 +116,10 @@ const page = () => {
         console.log("Loaded from DB")
         renderQuills(editorData.content, handleCreateQuill, loadQuill, socket)
       }
+    })
+    socket.on("new:master", () => {
+      setIsMaster(true)
+      console.log("became master")
     })
     socket.emit("request:latest")
     setTitle(editorData.title)
@@ -249,23 +254,23 @@ const page = () => {
   }
 
   // periodic save
-  useEffect(() => {
-    if(!socket || quills.length === 0) return
-    const interval = setInterval(() => {
-      if(isChanged){
-        setIsSaving(true)
-        const content = getEditorContent(quills)
-        socket.emit("save:editor", content)
-        setIsChanged(false)
-        setTimeout(() => {
-          setIsSaving(false)
-        }, 2000)
-      }
-    }, 2000)
-    return () => {
-      clearInterval(interval)
-    }
-  }, [socket, quills, isChanged])
+  // useEffect(() => {
+  //   if(!socket || quills.length === 0) return
+  //   const interval = setInterval(() => {
+  //     if(isChanged){
+  //       setIsSaving(true)
+  //       const content = getEditorContent(quills)
+  //       socket.emit("save:editor", content)
+  //       setIsChanged(false)
+  //       setTimeout(() => {
+  //         setIsSaving(false)
+  //       }, 2000)
+  //     }
+  //   }, 2000)
+  //   return () => {
+  //     clearInterval(interval)
+  //   }
+  // }, [socket, quills, isChanged])
 
   /* This useEffect updates all the editors (quills) event listeners when new editors are added
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
@@ -298,6 +303,8 @@ const page = () => {
 
     socket.on("recieve:changes", ({ delta, index, oldDelta } :{ delta: Delta, index: number, oldDelta: Delta}) => {
       console.log("got delta: ", delta.ops, "from index: ", index)
+      if(isMaster) setIsChanged(true)
+
       const selectedQuill = quills[index]
       // create plain objects and remove prototypes (to check for equality of objects' structure)
       const senderContent = JSON.parse(JSON.stringify(oldDelta))
@@ -329,17 +336,26 @@ const page = () => {
         }
         console.log("transformed: ", transformed)
         console.log("actual transform: ", actualTransform);
-        // const invertedDelta = actualTransform.invert(selectedQuill.getContents())
-        // setIgnoredDelta(invertedDelta)
-        // selectedQuill.updateContents(actualTransform)
-
-        // updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
-        const invertedDelta = transformed.invert(selectedQuill.getContents())
+        const invertedDelta = actualTransform.invert(selectedQuill.getContents())
         setIgnoredDelta(invertedDelta)
-        selectedQuill.updateContents(transformed)
+        selectedQuill.updateContents(actualTransform)
 
-        updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
-      }  
+        updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
+        // const invertedDelta = transformed.invert(selectedQuill.getContents())
+        // setIgnoredDelta(invertedDelta)
+        // selectedQuill.updateContents(transformed)
+
+        // updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
+      }
+      if(isMaster) {
+        setTimeout(() => {
+          console.log("saving to DB...r")
+          const content = getEditorContent(quills)
+          console.log("current content to save: ", content)
+          socket.emit("save:editor", content)
+          setIsChanged(false)
+        }, 2000)
+      }
     })
 
     socket.on("recieve:selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
@@ -380,14 +396,14 @@ const page = () => {
               }
             }
           }else{
-            throttledKeyPress(delta, q, index, socket, oldDelta, setAreChangesSent)
+            throttledKeyPress(delta, q, index, socket, oldDelta, setAreChangesSent, isMaster, quills, setIsChanged)
             if (index === 0) {
               debounceScreenShot(queryClient, editorId)
             }
             if(areChangesSent){
               setAreChangesSent(false)
             }
-            setIsChanged(true)
+            if(isMaster) setIsChanged(true)
           }
 
           updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index, true)
@@ -420,7 +436,7 @@ const page = () => {
       })
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, areChangesSent])
+  }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, areChangesSent, isMaster])
 
   const loadQuill = (id: string, content: any) => {
     if (parent && quills) {
@@ -451,6 +467,7 @@ const page = () => {
     return false
   }
   console.log("content:", getEditorContent(quills))
+  console.log("isMaster:", isMaster)
   const editorId = usePathname().split("/")[2]
   return (
     <div>
