@@ -44,9 +44,10 @@ io.on("connection", (socket) => {
   const socketId = socket.id
   let currentRoomMap = roomMap.get(roomId)
   console.log("current rooms: ", roomMap)
-  // if current room exist -> create room and set Master socket (first to join)
+  // if current room doesn't exist -> create room and set Master socket (first to join)
   if (!currentRoomMap) {
     masterSocket = socket.id
+    io.to(masterSocket).emit("new:master") // notify client that he became master
     let newRoomMap = new Map<string, SocketData>()
     newRoomMap.set(socketId, {
       email: userEmail,
@@ -182,6 +183,7 @@ io.on("connection", (socket) => {
         const newMasterSocket = [...currentRoomMap.entries()]
         if(newMasterSocket.length !== 0){
           masterSocket = newMasterSocket[0][0]
+          io.to(masterSocket).emit("new:master") // notify client that he became master
           console.log("new master socket: ", masterSocket)
         }else{
           masterSocket = undefined
