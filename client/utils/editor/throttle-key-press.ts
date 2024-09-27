@@ -2,6 +2,7 @@ import Quill from "quill"
 import { Delta } from "quill/core"
 import { Socket } from "socket.io-client"
 import isEqual from 'lodash.isequal'
+import getEditorContent from "./get-editor-content"
 
 const throttle = (delay: number) => {
     let timerFlag: any
@@ -20,7 +21,7 @@ const throttle = (delay: number) => {
       }
     }
   
-    const throttledKeyPress = (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setAreChangesSent: any) => {
+    const throttledKeyPress = (delta: Delta, quill: Quill, index: number, socket: Socket, oldDelta: Delta, setAreChangesSent: any, isMaster: boolean, quills: Quill[], setIsChanged: any) => {
       if(!socket) return
       if(timerFlag){
         if(invertedDelta){
@@ -53,6 +54,14 @@ const throttle = (delay: number) => {
           if(!isEqual(currentChanges, oldContent)){ 
             socket.emit("send:changes", { delta: parentDelta, oldDelta, index })
             setAreChangesSent(true)
+            // should refactor
+            if(isMaster) {
+              console.log("saving to DB...s")
+              const content = getEditorContent(quills)
+              console.log("current content to save: ", content)
+              socket.emit("save:editor", content)
+              setIsChanged(false)
+            }
           }
           deltas = []
           invertedDelta = null
