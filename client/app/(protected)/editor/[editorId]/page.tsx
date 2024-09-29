@@ -471,7 +471,7 @@ const page = () => {
   const editorId = usePathname().split("/")[2]
   return (
     <div>
-      {isLoading && <p className="text-center text-lg">Loading...</p>}
+      {/* {isLoading && <p className="text-center text-lg">Loading...</p>} */}
       {editorData === null && <div className="flex flex-col gap-2 items-center mt-10"><img className="w-20" src="/lock.png" alt="lock-img" /><p className="text-lg m-auto">You do not have access to this document.</p></div>}
       {editorData && (
         <>
