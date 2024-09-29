@@ -10,7 +10,13 @@ const throttle = (delay: number) => {
     let invertedDelta: Delta | null = null
 
     const setIgnoredDelta = (value: Delta) => {
-      if(timerFlag) invertedDelta = value
+      if(timerFlag){
+        if(invertedDelta) {
+          invertedDelta = invertedDelta.compose(value)
+        }else{
+          invertedDelta = value
+        }
+      }
     }
     const cancelThrottle = () => {
       if(timerFlag){
@@ -26,6 +32,7 @@ const throttle = (delay: number) => {
       if(timerFlag){
         if(invertedDelta){
           console.log("--------------IGNORE---------------------")
+          console.log("inverted delta: ", invertedDelta)
           invertedDelta = delta.transform(invertedDelta, true)
           console.log("original delta: ", delta)
           const deltaIgnore = invertedDelta.transform(delta, true)
