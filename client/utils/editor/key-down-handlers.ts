@@ -1,7 +1,9 @@
 import Quill from "quill";
 import { Socket } from "socket.io-client";
+import removeQuill from "./remove-quill";
+import { cancelThrottle } from "./throttle-key-press";
 
-const handleKeyDown = (quills: Quill[], q: Quill, index: number, exceedsPageSize: any, removeQuill: any, cancelThrottle: any, socket: Socket, parent: any) => {
+const handleKeyDown = (quills: Quill[], setQuills: any, setSelectionProperties: any, q: Quill, index: number, exceedsPageSize: any, socket: Socket, parent: any) => {
     return (event: any) => {
         console.log("Key down.")
         const currentSelection = q.getSelection();
@@ -18,7 +20,7 @@ const handleKeyDown = (quills: Quill[], q: Quill, index: number, exceedsPageSize
         const moveToPrevQuill = () => setTimeout(() => prevQuill?.setSelection(prevQuill.getLength()), 0);
         const moveAndDelete = () => setTimeout(() => {
             q.blur()
-            removeQuill(parent, index)
+            removeQuill(parent, index, socket, quills, setQuills, setSelectionProperties)
             cancelThrottle()
             socket.emit("remove:page", index)
             prevQuill.setSelection(prevQuill.getLength())
@@ -36,37 +38,7 @@ const handleKeyDown = (quills: Quill[], q: Quill, index: number, exceedsPageSize
             break;
         case "ArrowUp":
             if (currentLine === firstLine && index > 0){
-                    moveToPrevQuill()
-                    // const selection = q.getSelection()
-                    // if (selection) {
-                    //     // Get the bounds of the current cursor position
-                    //     const bounds = q.getBounds(selection.index);
-                    //     console.log("bounds: ", bounds)
-                  
-                    //     if (bounds) {
-                    //       // Get the toolbar element
-                    //     //   const toolbar = document.querySelector('.ql-toolbar') as HTMLElement | null;
-                    //       const toolbar = q.getModule("toolbar") as { container: HTMLElement }
-                  
-                    //       if (toolbar) {
-                    //         const toolbarHeight = toolbar.container.offsetHeight;
-                  
-                    //         // Check if the cursor is above the toolbar
-                    //         const cursorPosition = bounds.top;
-                    //         const editorTop = q.root.getBoundingClientRect().top;
-                  
-                    //         // Check if the cursor is going out of view due to the toolbar overlap
-                    //         console.log(cursorPosition, toolbarHeight)
-                    //         if (cursorPosition < toolbarHeight) {
-                    //           // Scroll to the position where the cursor should be visible, center-aligned
-                    //           console.log("scroll")
-                    //           prevQuill.root.scrollIntoView({ block: 'center', behavior: 'smooth' })
-                    //         //   moveToPrevQuill()
-                    //         }
-                    //       }
-                    //     }
-                    //   }
-                
+                    moveToPrevQuill()    
             }
             break;
         case "Backspace":
