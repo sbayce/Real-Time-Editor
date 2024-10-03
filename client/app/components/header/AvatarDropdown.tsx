@@ -1,7 +1,6 @@
 'use client'
 import React from 'react'
 import {
-    User,
     Avatar,
     Button,
     Dropdown,
@@ -31,8 +30,8 @@ const AvatarDropdown = () => {
             console.log(e.message)
         }
     }
-    if(!data && isLoading) return (<p className="text-md">loading...</p>)
-    if(!data && !isLoading) return (<Button onClick={() => router.replace("/signin")}>Login</Button>)
+    if(!data && isLoading) return (<Avatar color="default" name=" "/>)
+    if(!data && !isLoading) return (<Button className='bg-black text-white' onClick={() => router.replace("/signup")}>Sign Up</Button>)
     return (
         <Dropdown>
         <DropdownTrigger>

@@ -64,7 +64,7 @@ const SigninForm = () => {
           />
         </div>
 
-        <Button className="self-end mt-4" radius="sm" type="submit" color="secondary" variant="solid">
+        <Button className="self-end mt-4 bg-black text-white" radius="sm" type="submit" variant="solid">
           Sign In
         </Button>
         <Divider />
