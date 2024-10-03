@@ -25,7 +25,9 @@ const config: Config = {
     screens: {
       'xl': '1790px',
       'lg': '1520px',
+      'lm': '1400px',
       'md': '1080px',
+      'ms': '840px',
       'sm': '720px',
       'xs': '570px'
     }
