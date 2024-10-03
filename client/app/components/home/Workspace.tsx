@@ -56,7 +56,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <button
               onClick={createEditor}
-              className="flex justify-center items-center border rounded-sm w-[208px] h-[20.5rem] hover:border-gray-400"
+              className="flex justify-center items-center border rounded-sm w-[208px] h-[23.5rem] hover:border-gray-400"
             >
               <AddIcon className="w-14" />
             </button>

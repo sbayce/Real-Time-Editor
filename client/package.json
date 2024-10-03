@@ -13,7 +13,7 @@
     "@react-pdf/renderer": "^3.4.4",
     "axios": "^1.7.2",
     "file-saver": "^2.0.5",
-    "framer-motion": "^11.2.10",
+    "framer-motion": "^11.9.0",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.10.2",
     "jspdf": "^2.5.1",
@@ -30,7 +30,8 @@
     "react-quill": "^2.0.0",
     "react-responsive": "^10.0.0",
     "socket.io-client": "^4.7.5",
-    "sonner": "^1.5.0"
+    "sonner": "^1.5.0",
+    "typewriter-effect": "^2.21.0"
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",

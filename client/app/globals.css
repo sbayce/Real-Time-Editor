@@ -82,6 +82,36 @@ body {
   animation: fadeOut 0.5s ease forwards 1.5s; 
   pointer-events: none;
 }
+
+.grid-background {
+  position: relative;
+  overflow: hidden; /* Ensure content doesn't overflow */
+}
+
+.grid-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none"><path d="M 40 0 L 40 40 M 0 40 L 40 40 M 0 0 L 0 40 M 0 0 L 40 0" stroke="rgba(0, 0, 0, 0.1)" stroke-width="2" /></svg>');
+  background-size: 40px 40px;
+  background-repeat: repeat;
+  opacity: 1;
+}
+
+.grid-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0) 70%, rgba(255,255,255,0.8) 100%);
+  pointer-events: none; /* Allow interactions with content below */
+}
+
 .cursor.hide {
   opacity: 0;
 }

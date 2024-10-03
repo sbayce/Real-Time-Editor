@@ -1,39 +1,38 @@
 "use client"
 import React, { useCallback } from "react"
 import { usePathname } from "next/navigation"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import axios from "axios"
-import { Avatar, Button, Chip } from "@nextui-org/react"
+import { Button } from "@nextui-org/react"
 import Quill from "quill"
 import "quill/dist/quill.snow.css"
 import InviteModal from "@/app/components/editor/InviteModal"
 import OnlineUser from "@/app/types/online-user"
 import Editor from "@/app/types/editor"
-import getUserColor from "@/utils/editor/get-user-color"
-import updateLiveCursor from "@/utils/editor/update-live-cursor"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import DocumentIcon from "@/app/icons/document-outline.svg"
 import { useQueryClient } from "react-query"
-import { Delta } from "quill/core"
-import {throttledKeyPress, setIgnoredDelta, cancelThrottle} from "@/utils/editor/throttle-key-press"
 // import { createThrottleInstance } from "@/utils/editor/throttle-key-press"
 import throttleSelectionChange from "@/utils/editor/throttle-selection-change"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
-import debounceScreenShot from "@/utils/editor/debounce-screenshot"
-import {toolbarOptions, addTooltips} from "@/app/lib/editor/quil-toolbar"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
 import renderQuills from "@/utils/editor/render-quills"
-import isEqual from 'lodash.isequal'
 import handleKeyDown from "@/utils/editor/key-down-handlers"
 import throttleTitleChange from "@/utils/editor/throttle-title-change"
-import calcLinesDiff from "@/utils/delta/calc-lines-diff"
 import OnlineUsersModal from "@/app/components/editor/OnlineUsersModal"
 import OnlineUsersList from "@/app/components/editor/OnlineUsersList"
 import {useMediaQuery} from 'react-responsive'
+import exceedsPageSize from "@/utils/editor/exceeds-page-size"
+import { createQuill, initializeQuill } from "@/utils/editor/create-quill"
+import downloadPdf from "@/utils/editor/download-pdf"
+import removeQuill from "@/utils/editor/remove-quill"
+import textChangeHandler from "@/utils/editor/event-handlers/text-change-handler"
+import recieveChangeHandler from "@/utils/editor/event-handlers/recieve-change-handler"
+import selectionChangeHandler from "@/utils/editor/event-handlers/selection-change-handler"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -53,7 +52,6 @@ const handlePageExit = (e: any, socket: Socket, quills: Quill[], isChanged: bool
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null | undefined>(undefined)
-  const [isLoading, setIsLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [socket, setSocket] = useState<Socket | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
@@ -68,7 +66,6 @@ const page = () => {
   const isMdOrLarger = useMediaQuery({minWidth: 1287})
 
   const viewEditor = async () => {
-    setIsLoading(true)
     try {
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/view-editor/${editorId}`,
@@ -82,7 +79,6 @@ const page = () => {
       setEditorData(null)
       console.log(error.message)
     }
-    setIsLoading(false)
   }
   const handleTitleChange = (e: any) => {
     const value = e.target.value
@@ -111,10 +107,10 @@ const page = () => {
       console.log("recieved from master: ", content)
       if(content){
         console.log("Loaded from Master")
-        renderQuills(content, handleCreateQuill, loadQuill, socket)
+        renderQuills(content, socket, quills, setQuills, parent)
       }else{
         console.log("Loaded from DB")
-        renderQuills(editorData.content, handleCreateQuill, loadQuill, socket)
+        renderQuills(editorData.content, socket, quills, setQuills, parent)
       }
     })
     socket.on("new:master", () => {
@@ -151,6 +147,7 @@ const page = () => {
     }
   }, [socket, parent])
 
+  // update selection properties
   useEffect(() => {
     if(!onlineUsers || !selectionProperties) return
     selectionProperties.map((selectionPropery, index) => {
@@ -177,100 +174,11 @@ const page = () => {
 
   }, [socket, onlineUsers, selectionProperties, quills])
 
-  const initializeQuill = (container: any, id: string) => {
-    // document.getElementById(`quill-${id}`)?.remove()
-    const editor = document.createElement("div")
-    editor.style.border = "none"
-    editor.id = `quill-${id}`
-    container.appendChild(editor)
-    const quillInstance = new Quill(editor, {
-      theme: "snow",
-      modules: { toolbar: toolbarOptions, history: { userOnly: true } },
-    })
-    if(editorData?.accessType === AccessType.Read || id !== '0'){
-      const toolbar = quillInstance.getModule("toolbar") as { container: HTMLDivElement }
-      toolbar.container.style.visibility = "hidden"
-    }
-    addTooltips(quillInstance)
-    return quillInstance
-  }
-
-  const removeQuill = (container: any, index: number) => {
-    if (!socket || !quills) return
-    // const quillElement = document.querySelector(`#quill-${index}`)
-    // if(quillElement) container.removeChild(quillElement)
-    const quillElement = quills[index].container
-    console.log("container", container)
-    console.log("quill elem", quillElement)
-    if(quillElement){
-      container.removeChild(quillElement)
-    }
-    setQuills((prev: any) => {
-      const newQuills = [...prev]
-      newQuills.splice(index, 1)
-      return newQuills
-    })
-    /* should remove cursors from target quill (that will be deleted)
-       cursors from quills below target quill should shift their index -1
-       cursors from quills above target quill should remain the same */
-
-    setSelectionProperties(prev => {
-      const newSelectionProperties = prev.filter(selectionProperty => selectionProperty.quillIndex !== index)
-      .map(selectionProperty => {
-        if(selectionProperty.quillIndex > index){
-          return {
-            ...selectionProperty,
-            quillIndex: selectionProperty.quillIndex-1
-          }
-        }else{
-          return {...selectionProperty}
-        }
-      })
-      // const newSelectionProperties = prev.filter(selectionProperty => selectionProperty.quillIndex !== index)
-      console.log("NEW SELECTION PROPERTIES: ", newSelectionProperties)
-      return newSelectionProperties
-    })
-  }
-
   const wrapperRef = useCallback((wrapper: any) => {
     if (wrapper === null) return
     wrapper.innerHTML = ""
     setParent(wrapper)
   }, [])
-
-  const handleCreateQuill = (socket: Socket | null) => {
-    console.log(parent, quills, socket)
-    if (parent && quills && socket) {
-      const index = quills.length
-      console.log("quill length: ", index)
-      const newQuill = initializeQuill(parent, String(index))
-      // auto-focus
-      setTimeout(() => {
-        newQuill.focus()
-      }, 0)
-      setQuills((prev: any) => [...prev, newQuill])
-      socket.emit("add:page", { index })
-    }
-  }
-
-  // periodic save
-  // useEffect(() => {
-  //   if(!socket || quills.length === 0) return
-  //   const interval = setInterval(() => {
-  //     if(isChanged){
-  //       setIsSaving(true)
-  //       const content = getEditorContent(quills)
-  //       socket.emit("save:editor", content)
-  //       setIsChanged(false)
-  //       setTimeout(() => {
-  //         setIsSaving(false)
-  //       }, 2000)
-  //     }
-  //   }, 2000)
-  //   return () => {
-  //     clearInterval(interval)
-  //   }
-  // }, [socket, quills, isChanged])
 
   /* This useEffect updates all the editors (quills) event listeners when new editors are added
      States need to be updated: useEffect holds states of when it was created (state doesn't update)
@@ -278,86 +186,30 @@ const page = () => {
   useEffect(() => {
     if (!quills || !socket || !parent || !editorData || !onlineUsers) return
 
-    // const throttleInstances: any[] = []
-    // quills.forEach(() => {
-    //   throttleInstances.push(createThrottleInstance())
-    // })
-
+    // setup before-unload listener (to alert client that changes might not be saved when exiting)
     const handleBeforeUnload = (e: any) => handlePageExit(e, socket, quills, isChanged);
-
     window.addEventListener("beforeunload", handleBeforeUnload)
     
+    // setup listener for sending content of the master (for newly joined sockets)
     socket.on("master:request", (requestingSocket) => {
       console.log("master request here.")
       const content = getEditorContent(quills)
       socket.emit("send:master:content", {content, requestingSocket})
     })
 
+    // setup delete page listener
     socket.on("page:to:remove", (index) => {
       if (!quills[index - 1]) return
       if(quills[index].hasFocus()){
         quills[index - 1].focus()
       }
-      removeQuill(parent, index)
+      removeQuill(parent, index, socket, quills, setQuills, setSelectionProperties)
     })
+    // setup changes reciever listener
+    const recieveHandler = recieveChangeHandler(isMaster, setIsChanged, quills, selectionProperties, setSelectionProperties, areChangesSent, socket)
+    socket.on("recieve:changes", recieveHandler)
 
-    socket.on("recieve:changes", ({ delta, index, oldDelta } :{ delta: Delta, index: number, oldDelta: Delta}) => {
-      console.log("got delta: ", delta.ops, "from index: ", index)
-      if(isMaster) setIsChanged(true)
-
-      const selectedQuill = quills[index]
-      // create plain objects and remove prototypes (to check for equality of objects' structure)
-      const senderContent = JSON.parse(JSON.stringify(oldDelta))
-      const currentContent = JSON.parse(JSON.stringify(selectedQuill?.getContents()))
-
-      if(isEqual(senderContent, currentContent)){
-        console.log("without conflicts")
-        selectedQuill.updateContents(delta)
-
-        updateLiveCursor(delta, selectionProperties, setSelectionProperties, selectedQuill, index)
-
-      }else{ 
-        // should handle conflicts
-        console.log("sender old: ", senderContent)
-        console.log("current cont: ", currentContent)
-        const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
-        console.log("DIFF: ", difference)
-        const diff = calcLinesDiff(oldDelta, selectedQuill?.getContents())
-        console.log(diff)
-
-        let actualTransform: any
-        let transformed: any
-        if(areChangesSent){
-          transformed = difference?.transform(delta, true)
-          actualTransform = diff?.transform(delta, true)
-        }else{
-          transformed = difference?.transform(delta, false)
-          actualTransform = diff?.transform(delta, false)
-        }
-        console.log("transformed: ", transformed)
-        console.log("actual transform: ", actualTransform);
-        const invertedDelta = actualTransform.invert(selectedQuill.getContents())
-        setIgnoredDelta(invertedDelta)
-        selectedQuill.updateContents(actualTransform)
-
-        updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
-        // const invertedDelta = transformed.invert(selectedQuill.getContents())
-        // setIgnoredDelta(invertedDelta)
-        // selectedQuill.updateContents(transformed)
-
-        // updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
-      }
-      if(isMaster) {
-        setTimeout(() => {
-          console.log("saving to DB...r")
-          const content = getEditorContent(quills)
-          console.log("current content to save: ", content)
-          socket.emit("save:editor", content)
-          setIsChanged(false)
-        }, 2000)
-      }
-    })
-
+    // setup selection reciever listener
     socket.on("recieve:selection", ({ selectionIndex, selectionLength, index, senderSocket }) => {
       const selectedQuill = quills[index]
       selectionLength > 0 && console.log("recieved selection: ", selectedQuill.getText(selectionIndex, selectionLength))
@@ -367,60 +219,21 @@ const page = () => {
     let listeners: ((event: any) => void)[] = []
     if(editorData.accessType === AccessType.Write){
       quills.map((q, index) => {
-        q.off("text-change")
-        q.off("selection-change")
-        const keyDownHandler = handleKeyDown(quills, q, index, exceedsPageSize, removeQuill, cancelThrottle, socket, parent) //closure
+        // setup key down listener
+        const keyDownHandler = handleKeyDown(quills, setQuills, setSelectionProperties, q, index, exceedsPageSize, socket, parent) //closure
         listeners.push(keyDownHandler)
         q.container.addEventListener("keydown", keyDownHandler)
-        q.on("text-change", (delta: Delta, oldDelta: Delta, source) => {
-          if (source !== "user") return
-          console.log(q.getContents())
-          // check if new content increased page size beyond threshold
-          if(exceedsPageSize(q, index)){
-            //should cancel the changes and add a new page
-            let isDelete = false
-            delta.ops.forEach(op => {
-              if(op.delete){
-                isDelete = true
-              }
-            })
-            if(!isDelete){
-              q.updateContents(delta.invert(oldDelta), 'silent')
-              if (quills[index + 1]) { //switch to page below if it exists
-                setTimeout(() => {
-                  q.blur()
-                  quills[index + 1].focus()
-                }, 0.1)
-              } else {
-                handleCreateQuill(socket)
-              }
-            }
-          }else{
-            throttledKeyPress(delta, q, index, socket, oldDelta, setAreChangesSent, isMaster, quills, setIsChanged)
-            if (index === 0) {
-              debounceScreenShot(queryClient, editorId)
-            }
-            if(areChangesSent){
-              setAreChangesSent(false)
-            }
-            if(isMaster) setIsChanged(true)
-          }
 
-          updateLiveCursor(delta, selectionProperties, setSelectionProperties, q, index, true)
-        })
-        q.on("selection-change", (range, oldRange, source) => {
-          if ( !range) return
-          const toolbars = document.querySelectorAll(".ql-toolbar.ql-snow")
-          toolbars.forEach(toolbar => {
-            (toolbar as HTMLElement ).style.visibility = "hidden"
-          })
-          const toolbar = q.getModule("toolbar") as { container: HTMLDivElement }
-          toolbar.container.style.visibility = "visible"
+        // setup text change listener
+        const textHandler = textChangeHandler( //closure
+          q, index,quills, socket, setQuills, parent, selectionProperties, setSelectionProperties,
+          areChangesSent, setAreChangesSent, isMaster, setIsChanged, queryClient, editorId
+        )
+        q.on("text-change", textHandler)
 
-          const selectionLength = range.length
-          const selectionIndex = range.index
-          throttleSelectionChange(selectionIndex, selectionLength, index, socket)
-        })
+        // setup selection change listener
+        const selectionHandler = selectionChangeHandler(q, index, socket)
+        q.on("selection-change", selectionHandler)
       })
     }
     return () => {
@@ -428,7 +241,6 @@ const page = () => {
       socket.off("recieve:selection")
       socket.off("page:to:remove")
       socket.off("master:request")
-      socket.off("DB:update")
       quills.map((quill, i) => {
         quill.off("text-change")
         quill.off("selection-change")
@@ -438,40 +250,14 @@ const page = () => {
     }
   }, [quills, socket, onlineUsers, selectionProperties, parent, editorData, isChanged, areChangesSent, isMaster])
 
-  const loadQuill = (id: string, content: any) => {
-    if (parent && quills) {
-      const newQuill = initializeQuill(parent, id)
-      setQuills((prev: any) => [...prev, newQuill])
-      newQuill.setContents(content)
-      if(editorData?.accessType === AccessType.Write){
-        newQuill.enable()
-      }else{
-        newQuill.disable()
-      }
-    }
-  }
   console.log(quills)
   console.log("selection Properties: ", selectionProperties)
 
-  const exceedsPageSize = (quill: Quill, quillIndex: number) => {
-    if (!quill || !quills || !socket) return
-
-    let pageSize = quill.root.clientHeight
-    let sum = 0
-    for (let i = 0; i < quill.root.children.length; i++) {
-      sum += quill?.root.children[i].clientHeight
-    }
-    if (sum > pageSize - 50) {
-      return true
-    }
-    return false
-  }
   console.log("content:", getEditorContent(quills))
   console.log("isMaster:", isMaster)
   const editorId = usePathname().split("/")[2]
   return (
-    <div>
-      {isLoading && <p className="text-center text-lg">Loading...</p>}
+    <>
       {editorData === null && <div className="flex flex-col gap-2 items-center mt-10"><img className="w-20" src="/lock.png" alt="lock-img" /><p className="text-lg m-auto">You do not have access to this document.</p></div>}
       {editorData && (
         <>
@@ -479,43 +265,13 @@ const page = () => {
         {isSaving && <p>Saving...</p>}
         <div className="flex gap-4 items-center">
           <InviteModal />
-          <Button
-            radius="sm"
-            variant="flat"
-            className="pt-0 px-2 text-white bg-black text-sm gap-1"
-            onClick={() => handleCreateQuill(socket)}
-          >
+          <Button radius="sm" variant="flat" className="pt-0 px-2 text-white bg-black text-sm gap-1"
+            onClick={() => createQuill(socket, quills, setQuills, parent)}>
             <DocumentIcon className="w-4" />
             Add page
           </Button>
-          <Button
-          variant="flat"
-          color="danger"
-          radius="sm"
-          className="text-white bg-black"
-            onClick={async () => {
-              const delta = getEditorContent(quills);
-              console.log("all content:", delta);
-              const response = await fetch(`/editor/${editorId}/pdf`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ delta }),
-              });
-              if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', 'editor-content.pdf');
-                document.body.appendChild(link);
-                link.click();
-              } else {
-                console.error('Failed to generate PDF');
-              }
-            }}
-          >
+          <Button variant="flat" color="danger" radius="sm" className="text-white bg-black"
+            onClick={() => downloadPdf(quills, editorId)}>
             Download PDF
           </Button>
           <OnlineUsersModal onlineUsers={onlineUsers} />
@@ -536,7 +292,7 @@ const page = () => {
           </div>
         </div>
         </>)}
-    </div>
+    </>
   )
 }
 

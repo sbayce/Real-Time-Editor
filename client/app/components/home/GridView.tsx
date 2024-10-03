@@ -88,7 +88,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
                   Opened {formatDate(editor.updated_at)}
                 </p>
               </div>
-              <Dropdown>
+              <Dropdown className="shadow-lg border">
                 <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
                   <button>
                     <ThreeDotIcon className="w-5 h-5 self-center opacity-70" />
