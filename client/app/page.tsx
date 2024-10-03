@@ -55,7 +55,7 @@ export default function Home() {
           >
             <motion.img
               className=" border rounded-lg shadow-lg"
-              src="preview.png"
+              src="/preview.png"
               alt="preview"
             />
           </motion.div>
