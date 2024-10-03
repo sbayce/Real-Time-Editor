@@ -23,7 +23,7 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="flex flex-col gap-2 w-[400px] ms:w-[800px]"
           >
-            <h1 className="text-5xl text-center xs:text-start w-[400px] 3xs:w-[400px] 2xs:w-[500px] ms:w-[700px] md:w-[900px]">
+            <h1 className="text-5xl text-center xs:text-start self-center xs:self-start w-[400px] 3xs:w-[400px] 2xs:w-[500px] ms:w-[700px]  ">
                 <Typewriter
                 onInit={(typewriter) => {
                   typewriter.typeString('Collaborate on Documents in Real-Time')
@@ -34,7 +34,7 @@ export default function Home() {
                 }}
               />
             </h1>
-            <motion.p className="text-center 2xs:text-start self-center 2xs:self-start w-[300px] xs:w-[400px] sm:w-[500px] ms:w-[600px] text-lg mt-4">
+            <motion.p className="text-center xs:text-start self-center xs:self-start w-[300px] xs:w-[400px] sm:w-[500px] ms:w-[600px] text-lg mt-4">
               Create, edit, and collaborate on documents with your team, no matter
               where they are. Invite collaborators and see everyone's changes
               instantly, without the chaos.
