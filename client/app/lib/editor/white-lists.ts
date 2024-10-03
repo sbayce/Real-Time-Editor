@@ -12,4 +12,4 @@ export const sizeWhitelist = [
     "60px",
     "72px",
   ]
-export const fontWhitelist = ["times-new-roman", "inter", "roboto", "mirza", "arial"]
+export const fontWhitelist = ["roboto", "inter", "mirza", "arial"]

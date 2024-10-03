@@ -7,11 +7,6 @@
   content: 'Roboto';
 }
 
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="lexend"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="lexend"]::before {
-  content: 'Lexend';
-}
-
 .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="inter"]::before,
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="inter"]::before {
   content: 'Inter';
@@ -22,10 +17,6 @@
   content: 'Arial';
 }
 
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
-  content: 'Times new roman';
-}
 .ql-snow .ql-picker.ql-font {
   width: 150px !important;
 }
@@ -38,7 +29,4 @@
   }
 .ql-font-mirza {
     font-family: var(--font-mirza);
-}
-.ql-font-lexend {
-    font-family: var(--font-lexend);
 }

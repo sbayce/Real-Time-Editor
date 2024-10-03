@@ -21,9 +21,9 @@ export default function Home() {
             animate="visible"
             variants={fadeIn}
             transition={{ delay: 0.3 }}
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-2 w-[400px] ms:w-[800px]"
           >
-            <h1 className="text-5xl">
+            <h1 className="text-5xl text-center xs:text-start w-[400px] 3xs:w-[400px] 2xs:w-[500px] ms:w-[700px] md:w-[900px]">
                 <Typewriter
                 onInit={(typewriter) => {
                   typewriter.typeString('Collaborate on Documents in Real-Time')
@@ -34,7 +34,7 @@ export default function Home() {
                 }}
               />
             </h1>
-            <motion.p className="text-start w-[600px] text-lg mt-4">
+            <motion.p className="text-center 2xs:text-start self-center 2xs:self-start w-[300px] xs:w-[400px] sm:w-[500px] ms:w-[600px] text-lg mt-4">
               Create, edit, and collaborate on documents with your team, no matter
               where they are. Invite collaborators and see everyone's changes
               instantly, without the chaos.
@@ -48,7 +48,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div
-            className="w-[500px] min-w-[500px] xs:w-[600px] sm:w-[700px] ms:w-[800px] lg:w-[700px] lg:min-w-[700px] xl:w-[800px] xl:min-w-[800px]"
+            className="w-[400px] 2xs:w-[500px] min-w-[600px] xs:w-[600px] sm:w-[700px] ms:w-[800px] lg:w-[700px] lg:min-w-[700px] xl:w-[800px] xl:min-w-[800px]"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "circInOut", delay: 0.1 }}
@@ -60,7 +60,7 @@ export default function Home() {
             />
           </motion.div>
         </div>
-        <motion.section className="flex flex-col lm:flex-row items-center gap-10 mb-14 lm:mb-0 justify-between z-10">
+        <motion.section className="flex flex-col lm:flex-row items-center gap-10 mb-14 lm:mb-0 justify-between z-10 text-center xs:text-start">
         <motion.div className="tracking-wider">
           <motion.h2
               className="text-xl font-semibold"
@@ -69,10 +69,10 @@ export default function Home() {
               variants={fadeIn}
               transition={{ delay: 0.6 }}
             >
-              - Collaboration
+              Collaboration
             </motion.h2>
             <motion.p
-              className="w-[400px] my-4"
+              className="w-[280px] 2xs:w-[300px] xs:w-[400px] my-4"
               initial="hidden"
               animate="visible"
               variants={fadeIn}
@@ -91,11 +91,11 @@ export default function Home() {
               variants={fadeIn}
               transition={{ delay: 0.6 }}
             >
-              - Live Cursors
+              Live Cursors
             </motion.h2>
 
             <motion.p
-              className="w-[400px] my-4"
+              className="w-[280px] 2xs:w-[300px] xs:w-[400px] my-4"
               initial="hidden"
               animate="visible"
               variants={fadeIn}
@@ -114,11 +114,11 @@ export default function Home() {
                 variants={fadeIn}
                 transition={{ delay: 0.8 }}
               >
-                - Conflict-Free Editing
+                Conflict-Free Editing
               </motion.h2>
 
               <motion.p
-                className="w-[400px] my-4"
+                className="w-[280px] 2xs:w-[300px] xs:w-[400px] my-4"
                 initial="hidden"
                 animate="visible"
                 variants={fadeIn}
