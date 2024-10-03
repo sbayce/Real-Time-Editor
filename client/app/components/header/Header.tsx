@@ -12,7 +12,7 @@ const Header = () => {
       <Link href={data? '/home' : '/'} className="fixed pt-8 z-20 font-medium text-xl font-roboto">
         Real-time Editor
       </Link>
-      <div className="fixed z-10 right-6 pt-8">
+      <div className="fixed z-20 right-6 pt-8">
         <AvatarDropdown />
       </div>
     </header>
