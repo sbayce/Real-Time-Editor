@@ -10,7 +10,6 @@ import {
   Chip,
   Avatar,
 } from "@nextui-org/react"
-import { usePathname } from "next/navigation"
 import PeopleIcon from "@/app/icons/people-outline.svg"
 import OnlineUser from "@/app/types/online-user"
 
@@ -53,7 +52,10 @@ const OnlineUsersModal = ({onlineUsers}: {onlineUsers: OnlineUser[] | null}) => 
                               name={user.username}
                               getInitials={(name) => name.charAt(0)}
                             />
-                            <p className="truncate w-full">{user.username}</p>
+                            <div>
+                              <p className="truncate w-full">{user.username}</p>
+                              <p className="truncate w-full">{user.email}</p>                          
+                            </div>
                           </div>
                         </Chip>
                       )

@@ -67,7 +67,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
   }
   return (
     <>
-      {data.map((editor: any) => {
+      {data && data.map((editor: any) => {
         return (
           <div
             key={editor.id}
