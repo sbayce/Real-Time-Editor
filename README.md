@@ -7,3 +7,9 @@ Real-time synchronization is achieved through WebSockets using Socket.IO, allowi
 A key feature is live cursors, which display each user's cursor position and text selection in real time, offering visibility into what collaborators are working on. This enhances collaboration, making the editing experience smoother and more intuitive.
 
 To maintain performance, the app implements throttling when sending document changes over WebSockets, reducing the number of updates transmitted without compromising real-time responsiveness.
+
+# Screenshots
+
+![landing page](https://i.imgur.com/RO24Cod.png)
+![home page](https://i.imgur.com/hEWwCRW.png)
+![home page](https://i.imgur.com/dC3NUXx.png)
