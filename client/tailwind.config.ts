@@ -29,7 +29,9 @@ const config: Config = {
       'md': '1080px',
       'ms': '840px',
       'sm': '720px',
-      'xs': '570px'
+      'xs': '570px',
+      '2xs': '500px',
+      '3xs': '430px',
     }
   },
   darkMode: "class",
