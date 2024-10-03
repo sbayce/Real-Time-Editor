@@ -36,7 +36,7 @@ const AvatarDropdown = () => {
         <Dropdown>
         <DropdownTrigger>
             <Avatar
-                color="secondary"
+                color="primary"
                 name={data.username}
                 className="cursor-pointer"
             />
