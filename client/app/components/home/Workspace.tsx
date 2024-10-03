@@ -48,8 +48,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
   }
   return (
     <>
-      {ownedData && (
-        <div>
+        <>
           <h1 className="text-2xl font-medium mb-4 text-center">
             Your Work
           </h1>
@@ -60,18 +59,21 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
             >
               <AddIcon className="w-14" />
             </button>
-            {ownedData && (
-              <GridView
-                data={ownedData}
-                deleteEditor={deleteEditor}
-                queryClient={queryClient}
-              />
-            )}
+            {ownedData && (<>
+              {ownedData.length === 0 && <h1 className="text-xl w-[300px]">No documents.</h1>}
+              {
+                <GridView
+                  data={ownedData}
+                  deleteEditor={deleteEditor}
+                  queryClient={queryClient}
+                />
+              }
+            </>
+          )}
           </div>
-        </div>
-      )}
+        </>
       {collaboratedData.length > 0 && (
-        <div>
+        <>
           <h1 className="text-2xl font-medium mb-4 text-center mt-8">
             Your Collaboration
           </h1>
@@ -82,7 +84,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
                 queryClient={queryClient}
               />
           </div>
-        </div>
+        </>
       )}
     </>
   )
