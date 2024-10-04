@@ -3,24 +3,18 @@ import { useRouter } from "next/navigation"
 import { Image } from "@nextui-org/react"
 import formatDate from "@/utils/workspace/format-date"
 import {
-  User,
-  Avatar,
   Button,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  DropdownSection,
   DropdownItem,
-  cn,
   Modal,
   ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
   useDisclosure,
-  Checkbox,
   Input,
-  Link,
 } from "@nextui-org/react"
 import ThreeDotIcon from "@/app/icons/ellipsis-vertical.svg"
 import { Toaster, toast } from "sonner"
@@ -29,7 +23,7 @@ import { QueryClient } from "react-query"
 
 type GridViewProps = {
   data: any
-  deleteEditor: Function
+  deleteEditor?: Function
   queryClient: QueryClient
 }
 
@@ -76,16 +70,20 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
             }}
             className="rounded-sm flex flex-col cursor-pointer w-[208px] border hover:border-gray-400"
           >
-            <Image
-              src={editor.snap_shot ? editor.snap_shot : "./img.jfif"}
-              radius="none"
-              className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem] "
-            />
+            {editor.snap_shot ? 
+              <Image
+                src={editor.snap_shot}
+                radius="none"
+                className="rounded-t-md object-cover aspect-video w-[25.5rem] min-h-[19.5rem] "
+              />
+              :
+              <div className="rounded-t-md object-cover aspect-video w-full min-h-[19.5rem] " />
+            }
             <div className="flex justify-between px-2 pt-4 border-t items-center">
               <div className="">
                 <p className="font-medium line-clamp-1 w-40">{editor.title}</p>
                 <p className="text-sm text-gray-400">
-                  Opened {formatDate(editor.updated_at)}
+                  {editor.updated_at? `Opened ${formatDate(editor.updated_at)}` : `Created ${formatDate(editor.created_at)}`}
                 </p>
               </div>
               <Dropdown className="shadow-lg border">
@@ -105,9 +103,14 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
                       Rename
                     </p>
                   </DropdownItem>
-                  <DropdownItem onClick={() => deleteEditor(editor.id)}>
-                    <p>Delete</p>
+                  <DropdownItem className={`${!deleteEditor && 'hidden'}`}>
+                    {deleteEditor && 
+                      <div onClick={() => deleteEditor(editor.id)}>
+                        Delete
+                      </div>
+                    }
                   </DropdownItem>
+                  
                 </DropdownMenu>
               </Dropdown>
             </div>

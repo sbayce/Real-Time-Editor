@@ -281,7 +281,7 @@ const page = () => {
           <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">
               <input
                 value={title}
-                className="self-start flex justify-between left-2 fixed bg-transparent hover:bg-none text-xl mr-2 mx-8 top-12"
+                className="self-start flex justify-between left-2 fixed bg-transparent hover:bg-none text-xl mr-2 mx-8 top-[60px]"
                 onChange={handleTitleChange}
               />
                  

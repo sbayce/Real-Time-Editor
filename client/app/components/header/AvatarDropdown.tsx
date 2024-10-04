@@ -44,7 +44,7 @@ const AvatarDropdown = () => {
             <DropdownMenu onAction={(key) => {
                 if(key === 'logout') handleLogout()
             }}>
-                <DropdownSection>
+                <DropdownSection showDivider>
                 <DropdownItem>
                 <div className="flex flex-col gap-2">
                     <p>{data.username}</p>
