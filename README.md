@@ -12,4 +12,4 @@ To maintain performance, the app implements throttling when sending document cha
 
 ![landing page](https://i.imgur.com/RO24Cod.png)
 ![home page](https://i.imgur.com/hEWwCRW.png)
-![home page](https://i.imgur.com/dC3NUXx.png)
+![home page](https://i.imgur.com/ZghMuON.png)
