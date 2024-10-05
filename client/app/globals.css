@@ -36,6 +36,13 @@ body {
   color: white; */
   font-family: var(--font-roboto);
 }
+.ql-picker-label {
+  border-radius: 3px !important;
+}
+.ql-picker-label:hover {
+  background-color: #c8c8c9;
+  color: #444 !important;
+}
 .highlight {
   opacity: 40%;
   pointer-events: none;
@@ -132,8 +139,14 @@ body {
   margin: 0 4px;
   border-radius: 5px;
 }
+.ql-formats button:hover svg .ql-stroke {
+  stroke: #444 !important;
+}
+.ql-formats button:hover svg .ql-fill {
+  fill: #444 !important;
+}
 .ql-formats button:hover {
-  background-color: #c2c4ca !important;
+  background-color: #c8c8c9 !important;
   border-radius: 0.2rem;
 }
 .ql-toolbar .ql-formats:not(:last-child) {
@@ -151,7 +164,8 @@ body {
   top: 0;
   left: 0;
   z-index: 1;
-  background-color: #f3f3f3;
+  /* background-color: #f3f3f3; */
+  background-color: white;
   border: none !important;
   border-bottom: 1px solid #878b91 !important;
   align-items: flex-end;
