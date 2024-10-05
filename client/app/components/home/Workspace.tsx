@@ -1,10 +1,11 @@
 "use client"
 import React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import AddIcon from "@/app/icons/add-outline.svg"
 import axios from "axios"
 import { useQueryClient } from "react-query"
 import GridView from "./GridView"
+import { Toaster, toast } from "sonner"
 
 type WorkspaceProps = {
   owned: any
@@ -30,6 +31,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
         console.log(res.data)
         setOwnedData([...ownedData, res.data])
         queryClient.invalidateQueries("get-workSpace")
+        toast.success("Document created.")
       })
   }
   const deleteEditor = async (editorId: number) => {
@@ -44,11 +46,13 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
         )
         setOwnedData(filteredOwnedData)
         queryClient.invalidateQueries("get-workSpace")
+        toast.success("Document deleted.")
       })
   }
+  console.log(collaboratedData)
   return (
     <>
-        <>
+          <Toaster />
           <h1 className="text-2xl font-medium mb-4 text-center">
             Your Work
           </h1>
@@ -60,7 +64,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
               <AddIcon className="w-14" />
             </button>
             {ownedData && (<>
-              {ownedData.length === 0 && <h1 className="text-xl w-[300px]">No documents.</h1>}
+              {ownedData.length === 0 && <h1 className="text-xl w-[300px]">Create documents.</h1>}
               {
                 <GridView
                   data={ownedData}
@@ -71,7 +75,6 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
             </>
           )}
           </div>
-        </>
       {collaboratedData.length > 0 && (
         <>
           <h1 className="text-2xl font-medium mb-4 text-center mt-8">
@@ -80,7 +83,6 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
           <div className="grid grid-cols-4 gap-4">
               <GridView
                 data={collaboratedData}
-                deleteEditor={deleteEditor}
                 queryClient={queryClient}
               />
           </div>

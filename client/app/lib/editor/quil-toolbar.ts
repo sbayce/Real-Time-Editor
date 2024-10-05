@@ -11,7 +11,6 @@ const toolbarOptions = [
   ["blockquote", "code-block"],
   ["link", "image", "video", "formula"],
 
-  [{ header: 1 }, { header: 2 }], // custom button values
   [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
   [{ script: "sub" }, { script: "super" }], // superscript/subscript
   [{ indent: "-1" }, { indent: "+1" }], // outdent/indent
