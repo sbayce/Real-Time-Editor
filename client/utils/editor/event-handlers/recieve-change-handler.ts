@@ -33,7 +33,7 @@ const recieveChangeHandler = (
           console.log("current cont: ", currentContent)
           const difference = new Delta(oldDelta).diff(selectedQuill?.getContents())
           console.log("DIFF: ", difference)
-          const diff = calcLinesDiff(oldDelta, selectedQuill?.getContents())
+          const diff = calcLinesDiff(oldDelta, selectedQuill?.getContents()) // each line diff
           console.log(diff)
   
           let actualTransform: any
@@ -47,11 +47,19 @@ const recieveChangeHandler = (
           }
           console.log("transformed: ", transformed)
           console.log("actual transform: ", actualTransform);
-          const invertedDelta = actualTransform.invert(selectedQuill.getContents())
-          setIgnoredDelta(invertedDelta)
-          selectedQuill.updateContents(actualTransform)
-  
-          updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
+          if(diff.ops.length === 0) {
+            const invertedDelta = transformed.invert(selectedQuill.getContents())
+            setIgnoredDelta(invertedDelta)
+            selectedQuill.updateContents(transformed)
+    
+            updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
+          }else{
+            const invertedDelta = actualTransform.invert(selectedQuill.getContents())
+            setIgnoredDelta(invertedDelta)
+            selectedQuill.updateContents(actualTransform)
+    
+            updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
+          }
           // const invertedDelta = transformed.invert(selectedQuill.getContents())
           // setIgnoredDelta(invertedDelta)
           // selectedQuill.updateContents(transformed)
