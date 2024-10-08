@@ -10,6 +10,7 @@ const downloadPdf = async (quills: Quill[], editorId: string) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ delta }),
+      credentials: 'include'
     });
     if (response.ok) {
       const blob = await response.blob();
