@@ -5,11 +5,21 @@ import { Button } from '@nextui-org/react'
 import OnlineUsersModal from './OnlineUsersModal'
 import downloadPdf from '@/utils/editor/download-pdf'
 import { createQuill } from '@/utils/editor/create-quill'
-import { useContext } from 'react'
-import { EditorContext } from '@/app/contexts/editor-context'
+import { Socket } from 'socket.io-client'
+import Quill from 'quill'
+import OnlineUser from '@/app/types/online-user'
 
-const UtilityMenu = ({ editorId }: { editorId: string }) => {
-    const { socket, quills, setQuills, parent, onlineUsers } = useContext(EditorContext)
+type UtilityMenuProps = {
+    socket: Socket | null,
+    quills: Quill[],
+    parent: any,
+    onlineUsers: OnlineUser[] | null,
+    setQuills: any
+    editorId: string
+}
+
+const UtilityMenu = ({ socket, quills, parent, setQuills, onlineUsers, editorId }: UtilityMenuProps) => {
+    // const { socket, quills, setQuills, parent, onlineUsers } = useContext(EditorContext)
     return (
         <div className="flex gap-4 items-center">
             <InviteModal />

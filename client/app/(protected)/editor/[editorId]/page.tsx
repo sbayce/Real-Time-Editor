@@ -28,8 +28,7 @@ import textChangeHandler from "@/utils/editor/event-handlers/text-change-handler
 import recieveChangeHandler from "@/utils/editor/event-handlers/recieve-change-handler"
 import selectionChangeHandler from "@/utils/editor/event-handlers/selection-change-handler"
 import UtilityMenu from "@/app/components/editor/UtilityMenu"
-import { useContext } from "react"
-import { EditorContext } from "@/app/contexts/editor-context"
+import OnlineUser from "@/app/types/online-user"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -49,6 +48,10 @@ const handlePageExit = (e: any, socket: Socket, quills: Quill[], isChanged: bool
 
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null | undefined>(undefined)
+  const [socket, setSocket] = useState<Socket | null>(null)
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
+  const [quills, setQuills] = useState<Quill[]>([])
+  const [parent, setParent] = useState()
   const [title, setTitle] = useState('')
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[]>([])
   const [isChanged, setIsChanged] = useState(false)
@@ -57,8 +60,6 @@ const page = () => {
   const [isMaster, setIsMaster] = useState(false)
   const queryClient = useQueryClient()
   const isMdOrLarger = useMediaQuery({minWidth: 1287})
-
-  const {socket, setSocket, onlineUsers, setOnlineUsers, quills, setQuills, parent, setParent} = useContext(EditorContext)
 
   const viewEditor = async () => {
     try {
@@ -258,7 +259,7 @@ const page = () => {
         <>
         <div className="fixed top-0 right-20 z-20 pt-4 px-6 flex justify-between items-center gap-4">
         {isSaving && <p>Saving...</p>}
-        <UtilityMenu editorId={editorId} />
+        <UtilityMenu socket={socket} quills={quills} parent={parent} setQuills={setQuills} onlineUsers={onlineUsers} editorId={editorId} />
       </div>
         <div className="py-2">
           <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">
