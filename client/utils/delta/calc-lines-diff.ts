@@ -15,13 +15,59 @@ const calcLinesDiff = (senderDelta: Delta, recieverDelta: Delta) => {
     let finalDelta = new Delta();
     let totalChars = 0; // Track the total number of characters processed
 
+    // If the line count differs, we need to handle extra new lines
+  // if (senderLines.length !== receiverLines.length) {
+  //   const lineDiffCount = receiverLines.length - senderLines.length;
+
+  //   if (lineDiffCount > 0) {
+  //     // Receiver has more lines (new lines added)
+  //     // Insert new lines at the appropriate positions
+  //     finalDelta.retain(totalChars); // Retain any previous content
+  //     finalDelta.insert('\n'.repeat(lineDiffCount+1)); // Insert the new lines
+  //   } else {
+  //     // Sender has more lines (lines removed)
+  //     finalDelta.retain(totalChars); // Retain any previous content
+  //     finalDelta.delete(Math.abs(lineDiffCount+1)); // Delete the extra lines
+  //   }
+
+  //   // Adjust the lines so that they are the same length for further comparison
+  //   const minLines = Math.min(senderLines.length, receiverLines.length);
+  //   senderLines.length = receiverLines.length = minLines;
+  // }
+
     // Diff each line and combine the deltas
     for (let i = 0; i < senderLines.length || i < receiverLines.length; i++) {
       const senderLine = senderLines[i] || '';
       const receiverLine = receiverLines[i] || '';
 
       // Get the line difference
-      const lineDiff = new Delta([{ insert: senderLine }]).diff(new Delta([{ insert: receiverLine }]));
+      let lineDiff
+      // if(!receiverLine && senderLine && senderLine === receiverLines[i+1]){ // inserted line
+      // if(receiverLine !== senderLine && senderLine === receiverLines[i+1]){ // inserted line
+      if(receiverLine !== senderLine && senderLine !== '' && receiverLines.slice(i+1).includes(senderLine)){ // inserted line
+        let insert = `${receiverLine}\n`
+        let j = 0
+        while(receiverLines.slice(i+1)[j] !== senderLine){
+          insert += `${receiverLines.slice(i+1)[j]}\n`
+          j++
+        }
+        lineDiff = new Delta([{ insert }])
+        receiverLines.splice(i+1, j+1) // delete next element
+      // }else if(receiverLine && !senderLine && receiverLine === senderLines[i+1]){ // deleted line
+      // }else if(receiverLine !== senderLine && receiverLine === senderLines[i+1]){ // deleted line
+      }else if(receiverLine !== senderLine && senderLines.slice(i+1).includes(receiverLine)){ // deleted line
+        let deletedLines = senderLine.length+1
+        let j = 0
+        while(senderLines.slice(i+1)[j] !== receiverLine){
+          deletedLines += senderLines.slice(i+1)[j].length+1
+          j++
+        }
+        lineDiff = new Delta([{ delete: deletedLines }])
+        senderLines.splice(i+1, j+1) // delete next element
+      }else{
+        lineDiff = new Delta([{ insert: senderLine }]).diff(new Delta([{ insert: receiverLine }]));
+      }
+      // const lineDiff = new Delta([{ insert: senderLine }]).diff(new Delta([{ insert: receiverLine }]));
 
       // Add retain for previous lines and newlines
       if (i > 0) {
