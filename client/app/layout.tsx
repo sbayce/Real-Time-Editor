@@ -5,6 +5,7 @@ import { NextUIProvider } from "@nextui-org/react"
 import Header from "./components/header/Header"
 import ReactQueryProvider from "@/utils/providers/ReactQueryProvider"
 import { Roboto, Lexend, Mirza } from "next/font/google"
+import EditorContextProvider from "./contexts/editor-context"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,10 +42,12 @@ export default function RootLayout({
       <body className={`${inter.variable} ${roboto.variable} ${lexend.variable} ${mirza.variable}`}>
         <ReactQueryProvider>
           <NextUIProvider>
-            <div className="flex flex-col min-h-screen light text-foreground bg-background">
-              <Header />
-              <div className="flex-1">{children}</div>
-            </div>
+            <EditorContextProvider>
+              <div className="flex flex-col min-h-screen light text-foreground bg-background">
+                <Header />
+                <div className="flex-1">{children}</div>
+              </div>
+            </EditorContextProvider>
           </NextUIProvider>
         </ReactQueryProvider>
       </body>

@@ -4,15 +4,11 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import axios from "axios"
-import { Button } from "@nextui-org/react"
 import Quill from "quill"
 import "quill/dist/quill.snow.css"
-import InviteModal from "@/app/components/editor/InviteModal"
-import OnlineUser from "@/app/types/online-user"
 import Editor from "@/app/types/editor"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import renderLiveCursors from "@/utils/editor/render-live-cursors"
-import DocumentIcon from "@/app/icons/document-outline.svg"
 import { useQueryClient } from "react-query"
 // import { createThrottleInstance } from "@/utils/editor/throttle-key-press"
 import throttleSelectionChange from "@/utils/editor/throttle-selection-change"
@@ -23,16 +19,17 @@ import getEditorContent from "@/utils/editor/get-editor-content"
 import renderQuills from "@/utils/editor/render-quills"
 import handleKeyDown from "@/utils/editor/key-down-handlers"
 import throttleTitleChange from "@/utils/editor/throttle-title-change"
-import OnlineUsersModal from "@/app/components/editor/OnlineUsersModal"
 import OnlineUsersList from "@/app/components/editor/OnlineUsersList"
 import {useMediaQuery} from 'react-responsive'
 import exceedsPageSize from "@/utils/editor/exceeds-page-size"
-import { createQuill, initializeQuill } from "@/utils/editor/create-quill"
-import downloadPdf from "@/utils/editor/download-pdf"
+import { initializeQuill } from "@/utils/editor/create-quill"
 import removeQuill from "@/utils/editor/remove-quill"
 import textChangeHandler from "@/utils/editor/event-handlers/text-change-handler"
 import recieveChangeHandler from "@/utils/editor/event-handlers/recieve-change-handler"
 import selectionChangeHandler from "@/utils/editor/event-handlers/selection-change-handler"
+import UtilityMenu from "@/app/components/editor/UtilityMenu"
+import { useContext } from "react"
+import { EditorContext } from "@/app/contexts/editor-context"
 
 const Size: any = Quill.import("attributors/style/size")
 const Font: any = Quill.import("formats/font")
@@ -53,10 +50,6 @@ const handlePageExit = (e: any, socket: Socket, quills: Quill[], isChanged: bool
 const page = () => {
   const [editorData, setEditorData] = useState<Editor | null | undefined>(undefined)
   const [title, setTitle] = useState('')
-  const [socket, setSocket] = useState<Socket | null>(null)
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | null>(null)
-  const [quills, setQuills] = useState<Quill[]>([])
-  const [parent, setParent] = useState()
   const [selectionProperties, setSelectionProperties] = useState<SelectionProperties[]>([])
   const [isChanged, setIsChanged] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -64,6 +57,8 @@ const page = () => {
   const [isMaster, setIsMaster] = useState(false)
   const queryClient = useQueryClient()
   const isMdOrLarger = useMediaQuery({minWidth: 1287})
+
+  const {socket, setSocket, onlineUsers, setOnlineUsers, quills, setQuills, parent, setParent} = useContext(EditorContext)
 
   const viewEditor = async () => {
     try {
@@ -263,19 +258,7 @@ const page = () => {
         <>
         <div className="fixed top-0 right-20 z-20 pt-4 px-6 flex justify-between items-center gap-4">
         {isSaving && <p>Saving...</p>}
-        <div className="flex gap-4 items-center">
-          <InviteModal />
-          <Button radius="sm" variant="flat" className="pt-0 px-2 text-white bg-black text-sm gap-1"
-            onClick={() => createQuill(socket, quills, setQuills, parent)}>
-            <DocumentIcon className="w-4" />
-            Add page
-          </Button>
-          <Button variant="flat" color="danger" radius="sm" className="text-white bg-black"
-            onClick={() => downloadPdf(quills, editorId)}>
-            Download PDF
-          </Button>
-          <OnlineUsersModal onlineUsers={onlineUsers} />
-        </div>
+        <UtilityMenu editorId={editorId} />
       </div>
         <div className="py-2">
           <div className="flex justify-between px-6 fixed right-0 gap-4 pt-8 z-20">

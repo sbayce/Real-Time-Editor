@@ -229,6 +229,9 @@ export async function POST(request: Request, { params }: { params: { editorId: s
     return new NextResponse(stream as unknown as ReadableStream, {
       headers: {
         'Content-Type': 'application/pdf',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   } catch (error) {
