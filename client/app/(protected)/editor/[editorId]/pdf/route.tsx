@@ -9,20 +9,20 @@ Font.register({
   family: 'Roboto',
   fonts: [
     {
-      src: 'public/fonts/Roboto-Regular.ttf',
+      src: '/fonts/Roboto-Regular.ttf',
       fontWeight: 400,
     },
     {
-      src: './public/fonts/Roboto-Bold.ttf',
+      src: '/fonts/Roboto-Bold.ttf',
       fontWeight: 700,
     },
     {
-      src: './public/fonts/Roboto-Italic.ttf',
+      src: '/fonts/Roboto-Italic.ttf',
       fontWeight: 400,
       fontStyle: 'italic'
     },
     {
-      src: './public/fonts/Roboto-BoldItalic.ttf',
+      src: '/fonts/Roboto-BoldItalic.ttf',
       fontWeight: 700,
       fontStyle: 'italic'
     }
@@ -227,12 +227,12 @@ export async function POST(request: Request, { params }: { params: { editorId: s
 
     const stream = await renderToStream(<MyDocument pagesContent={pagesContent} />); // Render PDF
     return new NextResponse(stream as unknown as ReadableStream, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      // headers: {
+      //   'Content-Type': 'application/pdf',
+      //   'Access-Control-Allow-Origin': '*',
+      //   'Access-Control-Allow-Methods': 'POST',
+      //   'Access-Control-Allow-Headers': 'Content-Type',
+      // },
     });
   } catch (error) {
     console.error('Error generating PDF:', error);
