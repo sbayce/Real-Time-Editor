@@ -23,7 +23,7 @@ const OnlineUsersModal = ({onlineUsers}: {onlineUsers: OnlineUser[] | null}) => 
         radius="sm"
         variant="flat"
         color="primary"
-        className="p-2 gap-1"
+        className="p-2 gap-1 w-full ms:w-auto"
       >
         <PeopleIcon className="w-4" />
         Collaborators
