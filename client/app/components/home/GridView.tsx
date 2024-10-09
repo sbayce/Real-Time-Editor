@@ -20,6 +20,7 @@ import ThreeDotIcon from "@/app/icons/ellipsis-vertical.svg"
 import { Toaster, toast } from "sonner"
 import axios from "axios"
 import { QueryClient } from "react-query"
+import DocumentIcon from "@/app/icons/document-gradient.svg"
 
 type GridViewProps = {
   data: any
@@ -79,40 +80,43 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
               :
               <div className="rounded-t-md object-cover aspect-video w-full min-h-[19.5rem] " />
             }
-            <div className="flex justify-between px-2 pt-4 border-t items-center">
-              <div className="">
-                <p className="font-medium line-clamp-1 w-40">{editor.title}</p>
-                <p className="text-sm text-gray-400">
-                  {editor.updated_at? `Opened ${formatDate(editor.updated_at)}` : `Created ${formatDate(editor.created_at)}`}
-                </p>
-              </div>
-              <Dropdown className="shadow-lg border">
-                <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
-                  <button>
-                    <ThreeDotIcon className="w-5 h-5 self-center opacity-70" />
-                  </button>
-                </DropdownTrigger>
-                <DropdownMenu>
-                  <DropdownItem>
-                    <p
-                      onClick={() => {
-                        setSelectedEditorId(editor.id)
-                        onOpen()
-                      }}
-                    >
-                      Rename
-                    </p>
-                  </DropdownItem>
-                  <DropdownItem className={`${!deleteEditor && 'hidden'}`}>
-                    {deleteEditor && 
-                      <div onClick={() => deleteEditor(editor.id)}>
-                        Delete
-                      </div>
-                    }
-                  </DropdownItem>
-                  
-                </DropdownMenu>
+            <div className="flex flex-col px-2 pt-4 border-t items-center">
+                <div className="flex items-center gap-1 w-full">
+                    <DocumentIcon className='w-6 h-6' />
+                    <p className="font-medium line-clamp-1 w-full">{editor.title}</p>
+                </div>
+                <div className="flex items-center gap-1 w-full justify-between">
+                  <p className="text-sm text-gray-400">
+                    {editor.updated_at? `Opened ${formatDate(editor.updated_at)}` : `Created ${formatDate(editor.created_at)}`}
+                  </p>
+                <Dropdown className="shadow-lg border">
+                  <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
+                    <button>
+                      <ThreeDotIcon className="w-4 h-4 self-center opacity-70" />
+                    </button>
+                  </DropdownTrigger>
+                  <DropdownMenu>
+                    <DropdownItem>
+                      <p
+                        onClick={() => {
+                          setSelectedEditorId(editor.id)
+                          onOpen()
+                        }}
+                      >
+                        Rename
+                      </p>
+                    </DropdownItem>
+                    <DropdownItem className={`${!deleteEditor && 'hidden'}`}>
+                      {deleteEditor && 
+                        <div onClick={() => deleteEditor(editor.id)}>
+                          Delete
+                        </div>
+                      }
+                    </DropdownItem>
+                  </DropdownMenu>
               </Dropdown>
+                </div>
+              
             </div>
           </div>
         )
