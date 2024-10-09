@@ -172,23 +172,41 @@ body {
   padding-bottom: 5px;
   padding-left: 20px !important;
 }
-@media (max-width: 1586px) { /* Adjust the breakpoint as needed */
+@media (max-width: 1586px) {
   .ql-toolbar {
     padding-top: 100px !important;
     justify-content: center;
     height: 155px !important;
   }
 }
-@media (max-width: 819px) { /* Adjust the breakpoint as needed */
+@media (max-width: 819px) {
   .ql-toolbar {
     padding-bottom: 80px !important;
     height: 160px !important;
   }
 }
-@media (max-width: 637px) { /* Adjust the breakpoint as needed */
+@media (max-width: 637px) {
   .ql-toolbar {
     padding-bottom: 100px !important;
-    /* height: 170px !important; */
+    height: 200px !important;
+  }
+}
+@media (max-width: 444px) {
+  .ql-toolbar {
+    padding-bottom: 100px !important;
+    height: 230px !important;
+  }
+}
+@media (max-width: 392px) {
+  .ql-toolbar {
+    padding-bottom: 100px !important;
+    height: 250px !important;
+  }
+}
+@media (max-width: 310px) {
+  .ql-toolbar {
+    padding-bottom: 100px !important;
+    height: 270px !important;
   }
 }
 @page {
