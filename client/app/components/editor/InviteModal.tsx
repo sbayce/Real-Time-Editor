@@ -51,7 +51,7 @@ const InviteModal = () => {
         radius="sm"
         variant="flat"
         color="default"
-        className="p-0 text-white bg-black gap-1"
+        className="p-0 text-white bg-black gap-1 w-full ms:w-auto"
       >
         <PeopleIcon className="w-4" />
         Invite
