@@ -10,6 +10,6 @@ To maintain performance, the app implements throttling when sending document cha
 
 # Screenshots
 
-![landing page](https://i.imgur.com/RO24Cod.png)
-![home page](https://i.imgur.com/hEWwCRW.png)
+![landing page](https://i.imgur.com/9DE16hT.png)
+![home page](https://i.imgur.com/kgsJJu9.png)
 ![home page](https://i.imgur.com/ZghMuON.png)
