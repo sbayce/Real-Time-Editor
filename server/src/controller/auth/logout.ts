@@ -4,13 +4,11 @@ const logout = async (req: Request, res: Response) => {
     try {
         res.clearCookie("accessToken", {
             httpOnly: true,
-            domain: '',
             sameSite: 'none',
             secure: true,
         });
         res.clearCookie("refreshToken", {
             httpOnly: true,
-            domain: '',
             sameSite: 'none',
             secure: true,
         });
