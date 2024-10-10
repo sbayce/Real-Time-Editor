@@ -56,10 +56,10 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
           <h1 className="text-2xl font-medium mb-4 text-center">
             Your Work
           </h1>
-          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 place-items-center">
             <button
               onClick={createEditor}
-              className="flex justify-center items-center border rounded-sm w-[208px] h-[23.5rem] hover:border-gray-400"
+              className="flex justify-center items-center border rounded-sm w-[208px] h-[379px] hover:border-gray-400"
             >
               <AddIcon className="w-14" />
             </button>
@@ -80,7 +80,7 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
           <h1 className="text-2xl font-medium mb-4 text-center mt-8">
             Your Collaboration
           </h1>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 place-items-center">
               <GridView
                 data={collaboratedData}
                 queryClient={queryClient}
