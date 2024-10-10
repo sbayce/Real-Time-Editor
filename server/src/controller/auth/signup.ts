@@ -24,18 +24,14 @@ const signup = async (req: Request, res: Response) => {
     res.cookie("accessToken", token.accessToken, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
-      domain: '',
       sameSite: 'none',
       secure: true,
-      // domain: accessTokenCookieDomain,
     })
     res.cookie("refreshToken", token.refreshToken, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      domain: '',
       sameSite: 'none',
       secure: true,
-      // domain: accessTokenCookieDomain,
     })
     res.status(200).json({ token })
   } catch (error) {

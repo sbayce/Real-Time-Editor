@@ -80,7 +80,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
               :
               <div className="rounded-t-md object-cover aspect-video w-full min-h-[19.5rem] " />
             }
-            <div className="flex flex-col px-2 pt-4 border-t items-center">
+            <div className="flex flex-col px-2 pt-4 pb-1 border-t items-center">
                 <div className="flex items-center gap-1 w-full">
                     <DocumentIcon className='w-6 h-6' />
                     <p className="font-medium line-clamp-1 w-full">{editor.title}</p>

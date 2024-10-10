@@ -20,7 +20,7 @@ const Home = () => {
   
   console.log(data)
   return (
-    <div className="py-8 xs:px-2 sm:px-10 md:px-20 lg:px-40 xl:px-80">
+    <div className="py-8 px-2 xs:px-10 md:px-20 lg:px-40 xl:px-80">
       {data && <Workspace owned={data.owned} collaborated={data.collaborated} />}
     </div>
   )
