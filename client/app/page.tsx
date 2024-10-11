@@ -13,7 +13,7 @@ export default function Home() {
   }
 
   return (
-    <main className="grid-background">
+    <main className="grid-background flex-1">
       <div className="flex flex-col gap-10 lm:gap-32 pt-24 px-4 md:px-20">
         <div className="flex lg:flex-row flex-col items-center justify-between z-10">
           <motion.div
