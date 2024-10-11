@@ -6,28 +6,17 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  useDisclosure,
   Chip,
   Avatar,
 } from "@nextui-org/react"
-import PeopleIcon from "@/app/icons/people-outline.svg"
 import OnlineUser from "@/app/types/online-user"
+import type { UseDisclosureReturn } from '@nextui-org/use-disclosure';
 
-const OnlineUsersModal = ({onlineUsers}: {onlineUsers: OnlineUser[] | null}) => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure()
+const OnlineUsersModal = ({onlineUsers, disclosure}: {onlineUsers: OnlineUser[] | null, disclosure: UseDisclosureReturn}) => {
+  const { isOpen, onOpen, onOpenChange } = disclosure
 
   return (
     <>
-      <Button
-        onPress={onOpen}
-        radius="sm"
-        variant="flat"
-        color="primary"
-        className="p-2 gap-1 w-full ms:w-auto"
-      >
-        <PeopleIcon className="w-4" />
-        Collaborators
-      </Button>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}

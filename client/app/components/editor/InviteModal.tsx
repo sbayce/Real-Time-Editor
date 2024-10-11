@@ -7,18 +7,15 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  useDisclosure,
-  Checkbox,
   Input,
-  Link,
 } from "@nextui-org/react"
-import { Toaster, toast } from "sonner"
-import axios, { AxiosError } from "axios"
+import { toast } from "sonner"
+import axios from "axios"
 import { usePathname } from "next/navigation"
-import PeopleIcon from "@/app/icons/people-outline.svg"
+import type { UseDisclosureReturn } from '@nextui-org/use-disclosure';
 
-const InviteModal = () => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure()
+const InviteModal = ({disclosure}: {disclosure: UseDisclosureReturn}) => {
+  const { isOpen, onOpen, onClose, onOpenChange } = disclosure
   const [email, setEmail] = useState("")
   const editorId = usePathname().split("/")[2]
 
@@ -45,22 +42,11 @@ const InviteModal = () => {
   }
   return (
     <>
-      <Toaster position="top-center" />
-      <Button
-        onPress={onOpen}
-        radius="sm"
-        variant="flat"
-        color="default"
-        className="p-0 text-white bg-black gap-1 w-full ms:w-auto"
-      >
-        <PeopleIcon className="w-4" />
-        Invite
-      </Button>
       <Modal
         isOpen={isOpen}
-        onOpenChange={onOpenChange}
         placement="top-center"
         className="rounded-md"
+        onOpenChange={onOpenChange}
       >
         <ModalContent>
           {(onClose) => (

@@ -11,7 +11,7 @@ const inviteCollaborator = async (req: Request, res: Response) => {
       email,
     ])
     if (user.rowCount === 0) {
-      res.status(400).json("User not found, cannot invite.")
+      res.status(400).json("User not found.")
       return
     }
     const collaborator = user.rows[0]
