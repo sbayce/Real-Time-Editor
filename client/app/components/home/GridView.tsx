@@ -17,7 +17,7 @@ import {
   Input,
 } from "@nextui-org/react"
 import ThreeDotIcon from "@/app/icons/ellipsis-vertical.svg"
-import { Toaster, toast } from "sonner"
+import { toast } from "sonner"
 import axios from "axios"
 import { QueryClient } from "react-query"
 import DocumentIcon from "@/app/icons/document-gradient.svg"
@@ -164,7 +164,6 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
           )}
         </ModalContent>
       </Modal>
-      <Toaster />
     </>
   )
 }
