@@ -11,7 +11,7 @@ const viewEditor = async (req: Request, res: Response) => {
       [editorId]
     )
     if (editorExists.rowCount === 0) {
-      res.status(400).json("Editor does not exist")
+      res.status(404).json("Editor does not exist")
       return
     }
     let editor = editorExists.rows[0]
