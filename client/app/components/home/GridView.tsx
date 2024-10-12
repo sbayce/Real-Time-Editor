@@ -89,7 +89,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
                   <p className="text-sm text-gray-400">
                     {editor.updated_at? `Opened ${formatDate(editor.updated_at)}` : `Created ${formatDate(editor.created_at)}`}
                   </p>
-                <Dropdown className="shadow-lg border">
+                <Dropdown className="shadow-lg border border-gray-300">
                   <DropdownTrigger className="hover:bg-gray-400 hover:rounded-full p-0.5">
                     <button>
                       <ThreeDotIcon className="w-4 h-4 self-center opacity-70" />
@@ -106,7 +106,7 @@ const GridView = ({ data, deleteEditor, queryClient }: GridViewProps) => {
                         Rename
                       </p>
                     </DropdownItem>
-                    <DropdownItem className={`${!deleteEditor && 'hidden'}`}>
+                    <DropdownItem color="danger" className={`${!deleteEditor && 'hidden'}`}>
                       {deleteEditor && 
                         <div onClick={() => deleteEditor(editor.id)}>
                           Delete
