@@ -121,6 +121,11 @@ const page = () => {
   }, [editorData, parent])
 
   useEffect(() => {
+    if(!title) return
+    document.title = title
+  }, [title])
+
+  useEffect(() => {
     if (!socket || !parent) return
 
     socket.on("online:users", (data) => {
@@ -257,7 +262,7 @@ const page = () => {
       {editorData === null && <div className="flex flex-col gap-2 items-center mt-10"><img className="w-20" src="/lock.png" alt="lock-img" /><p className="text-lg m-auto">You do not have access to this document.</p></div>}
       {editorData && (
         <>
-        <div className="fixed top-0 right-20 z-20 pt-4 px-6 flex justify-between items-center gap-4">
+        <div className="fixed top-0 right-12 sm:right-20 z-20 pt-3 px-6 flex justify-between items-center gap-4">
         {isSaving && <p>Saving...</p>}
         <UtilityMenu socket={socket} quills={quills} parent={parent} setQuills={setQuills} onlineUsers={onlineUsers} editorId={editorId} />
       </div>
