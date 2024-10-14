@@ -1,6 +1,6 @@
-import { Page, Text, View, Document, StyleSheet, renderToStream, Font, Image } from '@react-pdf/renderer';
-import { NextResponse } from 'next/server';
-import { Delta } from 'quill/core';
+import { Page, Text, View, Document, StyleSheet, renderToStream, Font, Image } from '@react-pdf/renderer'
+import { NextResponse } from 'next/server'
+import { Delta } from 'quill/core'
 
 type ListType = 'bullet' | 'numbered'
 
@@ -9,20 +9,20 @@ Font.register({
   family: 'Roboto',
   fonts: [
     {
-      src: '/fonts/Roboto-Regular.ttf',
+      src: './fonts/Roboto-Regular.ttf',
       fontWeight: 400,
     },
     {
-      src: '/fonts/Roboto-Bold.ttf',
+      src: './fonts/Roboto-Bold.ttf',
       fontWeight: 700,
     },
     {
-      src: '/fonts/Roboto-Italic.ttf',
+      src: './fonts/Roboto-Italic.ttf',
       fontWeight: 400,
       fontStyle: 'italic'
     },
     {
-      src: '/fonts/Roboto-BoldItalic.ttf',
+      src: './fonts/Roboto-BoldItalic.ttf',
       fontWeight: 700,
       fontStyle: 'italic'
     }
@@ -53,32 +53,31 @@ const styles: any = StyleSheet.create({
     fontSize: 12,
     color: '#000000',
   }
-});
+})
 
 // Function to parse Quill Delta to PDF content
 const parseDeltaToPDFContent = (delta: Delta) => {
-  const elements = [];
-  let currentLine: React.ReactNode[] = []; // To store text fragments on the same line
-  let currentListType: ListType | null = null; // To track the current list type ('bullet' or 'ordered')
-  let listItems: React.ReactElement[] = []; // To store list items
+  const elements = []
+  let currentLine: React.ReactNode[] = [] // To store text fragments on the same line
+  let currentListType: ListType | null = null // To track the current list type ('bullet' or 'ordered')
+  let listItems: React.ReactElement[] = [] // To store list items
 
   delta.ops.forEach((op, index) => {
-    const { insert } = op;
-    const attributes = op.attributes || {};
-    console.log("op: ", op)
+    const { insert } = op
+    const attributes = op.attributes || {}
 
     // Define a new style object for each text fragment based on attributes
-    let style = { ...styles.text };
+    let style = { ...styles.text }
 
     if (attributes.bold) style.fontWeight = 700
-    if (attributes.italic) style.fontStyle = 'italic';
-    if (attributes.underline) style.textDecoration = 'underline';
-    if (attributes.strike) style.textDecoration = 'line-through';
+    if (attributes.italic) style.fontStyle = 'italic'
+    if (attributes.underline) style.textDecoration = 'underline'
+    if (attributes.strike) style.textDecoration = 'line-through'
     if (attributes.size) style.fontSize = Number(String(attributes.size).slice(0, -2))-4
-    if (attributes.color) style.color = attributes.color;
-    if (attributes.align) style.textAlign = attributes.align;
-    if (attributes.background) style.backgroundColor = attributes.background;
-    // if (attributes.font) style.fontFamily = attributes.font;
+    if (attributes.color) style.color = attributes.color
+    if (attributes.align) style.textAlign = attributes.align
+    if (attributes.background) style.backgroundColor = attributes.background
+    // if (attributes.font) style.fontFamily = attributes.font
 
     // Handle lists. Check is the next op contains a 'list' attribute
     if (delta.ops[index+1] && delta.ops[index+1].attributes && delta.ops[index+1]?.attributes?.list) {
@@ -88,8 +87,8 @@ const parseDeltaToPDFContent = (delta: Delta) => {
           <Text key={`list-${index}`} style={{}}>
             {listItems}
           </Text>
-        );
-        listItems = [];
+        )
+        listItems = []
       }
       currentListType = delta.ops[index+1]?.attributes?.list as ListType | null
     } else {
@@ -99,9 +98,9 @@ const parseDeltaToPDFContent = (delta: Delta) => {
           <Text key={`list-${index}`} style={{}}>
             {listItems}
           </Text>
-        );
-        currentListType = null;
-        listItems = [];
+        )
+        currentListType = null
+        listItems = []
       }
     }
 
@@ -114,23 +113,22 @@ const parseDeltaToPDFContent = (delta: Delta) => {
         <Text key={`line-${index}-before-img`} style={{}}>
           {currentLine}
         </Text>
-      );
-      currentLine = [];
+      )
+      currentLine = []
       // Insert is an image object
       elements.push(
         <Image key={index} src={insert.image as string} style={styles.image} />
-      );
+      )
     }else if (typeof insert === 'string' && (!attributes?.list || !attributes?.align)) { // ignore attributes of 'list' (already addressed in previous iteration)
       // Split the string by newlines to handle multi-line text
-      const fragments = insert.split('\n');
-      console.log("fragments: ", fragments)
+      const fragments = insert.split('\n')
 
       fragments.forEach((fragment, i) => {
         if (fragment) {
 
           if (currentListType) {
             // Add list item with the correct bullet or number
-            const bullet = currentListType === 'bullet' ? '• ' : `${listItems.length + 1}. `;
+            const bullet = currentListType === 'bullet' ? '• ' : `${listItems.length + 1}. `
             listItems.push(
               <Text key={`${index}-${i}`} style={{}}>
                 {/* Add non-breaking spaces for indentation */}
@@ -140,17 +138,16 @@ const parseDeltaToPDFContent = (delta: Delta) => {
                 </Text>
                 <Text style={style}>{fragment}</Text> {/* Text content */}
               </Text>
-            );
+            )
           }else {
             // Add each fragment with its style to the current line
-            console.log("current line style: ", style)
             currentLine.push(
               <Text>
               <Text key={`${index}-${i}`} style={style}>
                 {fragment}
               </Text>
               </Text>
-            );
+            )
           }
         }
 
@@ -160,18 +157,18 @@ const parseDeltaToPDFContent = (delta: Delta) => {
             <Text key={`${index}-${i}`} style={style}>
               {"\n"}
             </Text>
-          );
+          )
 
           elements.push(
             <Text key={`line-${index}-${i}`} style={{}}>
               {currentLine}
             </Text>
-          );
-          currentLine = []; // Reset for the next line
+          )
+          currentLine = [] // Reset for the next line
         }
-      });
+      })
     }
-  });
+  })
 
   // Push any remaining list items
   if (currentListType) {
@@ -179,24 +176,20 @@ const parseDeltaToPDFContent = (delta: Delta) => {
       <Text key={`list-last`} style={{}}>
         {listItems}
       </Text>
-    );
+    )
   }
 
   // Push any remaining content in the current line
-  // console.log("currentLine: ", currentLine[0].props.style)
   if (currentLine.length > 0) {
     elements.push(
       <Text key="last-line" style={{}}>
         {currentLine}
       </Text>
-    );
+    )
   }
-  // elements[0].props.children.forEach(element => {
-  //   console.log("Element: ", element)
-  // })
 
-  return elements;
-};
+  return elements
+}
 
 
 
@@ -212,20 +205,20 @@ const MyDocument = ({ pagesContent }: {pagesContent: any[]}) => (
     </Page>
     )}
   </Document>
-);
+)
 
 export async function POST(request: Request, { params }: { params: { editorId: string } }) {
   try {
-    const { delta } = await request.json(); // Receive Delta from the request
+    const { delta } = await request.json() // Receive Delta from the request
     const pagesContent = []
     for (const value of Object.values(delta)) {
       const pageContent = parseDeltaToPDFContent(value as Delta)
       pagesContent.push(pageContent)
     }
 
-    // const pdfContent = parseDeltaToPDFContent(delta); 
+    // const pdfContent = parseDeltaToPDFContent(delta) 
 
-    const stream = await renderToStream(<MyDocument pagesContent={pagesContent} />); // Render PDF
+    const stream = await renderToStream(<MyDocument pagesContent={pagesContent} />) // Render PDF
     return new NextResponse(stream as unknown as ReadableStream, {
       // headers: {
       //   'Content-Type': 'application/pdf',
@@ -233,9 +226,9 @@ export async function POST(request: Request, { params }: { params: { editorId: s
       //   'Access-Control-Allow-Methods': 'POST',
       //   'Access-Control-Allow-Headers': 'Content-Type',
       // },
-    });
+    })
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    return NextResponse.error();
+    console.error('Error generating PDF:', error)
+    return NextResponse.error()
   }
 }
