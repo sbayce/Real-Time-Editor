@@ -5,29 +5,29 @@ import { Delta } from 'quill/core'
 type ListType = 'bullet' | 'numbered'
 
 // Register fonts
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    {
-      src: './fonts/Roboto-Regular.ttf',
-      fontWeight: 400,
-    },
-    {
-      src: './fonts/Roboto-Bold.ttf',
-      fontWeight: 700,
-    },
-    {
-      src: './fonts/Roboto-Italic.ttf',
-      fontWeight: 400,
-      fontStyle: 'italic'
-    },
-    {
-      src: './fonts/Roboto-BoldItalic.ttf',
-      fontWeight: 700,
-      fontStyle: 'italic'
-    }
-  ]
-})
+// Font.register({
+//   family: 'Roboto',
+//   fonts: [
+//     {
+//       src: './fonts/Roboto-Regular.ttf',
+//       fontWeight: 400,
+//     },
+//     {
+//       src: './fonts/Roboto-Bold.ttf',
+//       fontWeight: 700,
+//     },
+//     {
+//       src: './fonts/Roboto-Italic.ttf',
+//       fontWeight: 400,
+//       fontStyle: 'italic'
+//     },
+//     {
+//       src: './fonts/Roboto-BoldItalic.ttf',
+//       fontWeight: 700,
+//       fontStyle: 'italic'
+//     }
+//   ]
+// })
 
 // Create styles
 const styles: any = StyleSheet.create({
@@ -40,7 +40,7 @@ const styles: any = StyleSheet.create({
     marginBottom: 5,
   },
   text: {
-    fontFamily: "Roboto",
+    // fontFamily: "Roboto",
     fontSize: 12, // Default font size (can be a string)
     color: '#000000', // Default text color
     fontWeight: 400,
