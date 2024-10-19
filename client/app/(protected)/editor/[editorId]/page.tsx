@@ -10,8 +10,6 @@ import Editor from "@/app/types/editor"
 import SelectionProperties from "@/app/types/SelectionProperties"
 import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import { useQueryClient } from "react-query"
-// import { createThrottleInstance } from "@/utils/editor/throttle-key-press"
-import throttleSelectionChange from "@/utils/editor/throttle-selection-change"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
 import AccessType from "@/app/types/access-type"
@@ -218,25 +216,23 @@ const page = () => {
     }
     )
     let listeners: ((event: any) => void)[] = []
-    if(editorData.accessType === AccessType.Write){
-      quills.map((q, index) => {
-        // setup key down listener
-        const keyDownHandler = handleKeyDown(quills, setQuills, setSelectionProperties, q, index, exceedsPageSize, socket, parent) //closure
-        listeners.push(keyDownHandler)
-        q.container.addEventListener("keydown", keyDownHandler)
+    quills.map((q, index) => {
+      // setup key down listener
+      const keyDownHandler = handleKeyDown(quills, setQuills, setSelectionProperties, q, index, exceedsPageSize, socket, parent) //closure
+      listeners.push(keyDownHandler)
+      q.container.addEventListener("keydown", keyDownHandler)
 
-        // setup text change listener
-        const textHandler = textChangeHandler( //closure
-          q, index,quills, socket, setQuills, parent, selectionProperties, setSelectionProperties,
-          areChangesSent, setAreChangesSent, isMaster, setIsChanged, queryClient, editorId
-        )
-        q.on("text-change", textHandler)
+      // setup text change listener
+      const textHandler = textChangeHandler( //closure
+        q, index,quills, socket, setQuills, parent, selectionProperties, setSelectionProperties,
+        areChangesSent, setAreChangesSent, isMaster, setIsChanged, queryClient, editorId
+      )
+      q.on("text-change", textHandler)
 
-        // setup selection change listener
-        const selectionHandler = selectionChangeHandler(q, index, socket)
-        q.on("selection-change", selectionHandler)
-      })
-    }
+      // setup selection change listener
+      const selectionHandler = selectionChangeHandler(q, index, socket)
+      q.on("selection-change", selectionHandler)
+    })
     return () => {
       socket.off("recieve:changes")
       socket.off("recieve:selection")

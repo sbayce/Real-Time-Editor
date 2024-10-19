@@ -8,12 +8,6 @@ const loadQuill = (id: string, content: any, setQuills: any, parent: any) => {
       setQuills((prev: any) => [...prev, newQuill])
       newQuill.setContents(content)
       newQuill.enable()
-    //--old--
-    //   if(editorData?.accessType === AccessType.Write){
-    //     newQuill.enable()
-    //   }else{
-    //     newQuill.disable()
-    //   }
     }
 }
 
