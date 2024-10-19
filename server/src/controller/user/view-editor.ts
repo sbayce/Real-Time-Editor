@@ -30,7 +30,6 @@ const viewEditor = async (req: Request, res: Response) => {
     const username = user.username
 
     res.status(201).json({ ...editor, userEmail: userEmail, username: username, accessType: foundUser.access_type, isOwner: foundUser.isOwner })
-    console.log("found user: ", foundUser)
   } catch (error) {
     console.log(error)
     res.status(500).json(error)

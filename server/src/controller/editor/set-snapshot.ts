@@ -16,7 +16,6 @@ const setSnapShot = async (req: Request, res: Response) => {
       return
     }
     cloudinary.uploader.upload(img, {public_id: editorId}).then(async (result) => {
-      console.log(result)
       const updatedEditor = await postgres.query(
         "UPDATE editor SET snap_shot = $1 WHERE id = $2",
         [result.secure_url, editorId]

@@ -3,7 +3,6 @@ import { Request, Response } from "express"
 const inviteCollaborator = async (req: Request, res: Response) => {
   try {
     const { postgres } = req.context
-    const userId = req.userId
     const editorId = req.params.editorId
     const { email } = req.body
 

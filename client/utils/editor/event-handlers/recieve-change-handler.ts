@@ -47,19 +47,7 @@ const recieveChangeHandler = (
           }
           console.log("transformed: ", transformed)
           console.log("actual transform: ", actualTransform);
-          // if(diff.ops.length === 0) {
-          //   const invertedDelta = transformed.invert(selectedQuill.getContents())
-          //   setIgnoredDelta(invertedDelta)
-          //   selectedQuill.updateContents(transformed)
-    
-          //   updateLiveCursor(transformed, selectionProperties, setSelectionProperties, selectedQuill, index)
-          // }else{
-          //   const invertedDelta = actualTransform.invert(selectedQuill.getContents())
-          //   setIgnoredDelta(invertedDelta)
-          //   selectedQuill.updateContents(actualTransform)
-    
-          //   updateLiveCursor(actualTransform, selectionProperties, setSelectionProperties, selectedQuill, index)
-          // }
+
           const invertedDelta = actualTransform.invert(selectedQuill.getContents())
           setIgnoredDelta(invertedDelta)
           selectedQuill.updateContents(actualTransform)
