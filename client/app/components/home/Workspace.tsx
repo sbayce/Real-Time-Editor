@@ -18,7 +18,6 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
     collaborated
   )
   const queryClient = useQueryClient()
-  console.log(ownedData)
 
   const createEditor = async () => {
     await axios
@@ -49,7 +48,6 @@ const Workspace = ({ owned, collaborated }: WorkspaceProps) => {
         toast.success("Document deleted.")
       })
   }
-  console.log(collaboratedData)
   return (
       <>
           <h1 className="text-2xl font-medium mb-4 text-center">

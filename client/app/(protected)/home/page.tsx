@@ -16,9 +16,8 @@ const Home = () => {
       console.log(err)
     }
   }
-  const {data, isLoading} = useQuery("get-workSpace", getWorkspace)
+  const { data } = useQuery("get-workSpace", getWorkspace)
   
-  console.log(data)
   return (
     <div className="py-8 px-2 xs:px-10 md:px-20 lg:px-40 xl:px-80">
       {data && <Workspace owned={data.owned} collaborated={data.collaborated} />}

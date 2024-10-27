@@ -29,7 +29,7 @@ const viewEditor = async (req: Request, res: Response) => {
     const userEmail = user.email
     const username = user.username
 
-    res.status(201).json({ ...editor, userEmail: userEmail, username: username, accessType: foundUser.access_type, isOwner: foundUser.isOwner })
+    res.status(201).json({ ...editor, userEmail: userEmail, username: username, isOwner: foundUser.isOwner })
   } catch (error) {
     console.log(error)
     res.status(500).json(error)
