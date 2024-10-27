@@ -12,7 +12,7 @@ const initializeQuill = (container: any, id: string) => {
       theme: "snow",
       modules: { toolbar: toolbarOptions, history: { userOnly: true } },
     })
-    if(id !== '0'){ // old: if(editorData?.accessType === AccessType.Read || id !== '0'){
+    if(id !== '0'){
       const toolbar = quillInstance.getModule("toolbar") as { container: HTMLDivElement }
       toolbar.container.style.visibility = "hidden"
     }

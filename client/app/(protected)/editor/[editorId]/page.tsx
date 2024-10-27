@@ -12,7 +12,6 @@ import renderLiveCursors from "@/utils/editor/render-live-cursors"
 import { useQueryClient } from "react-query"
 import { sizeWhitelist, fontWhitelist } from "@/app/lib/editor/white-lists"
 import changeCursorPosition from "@/utils/editor/change-cursor-position"
-import AccessType from "@/app/types/access-type"
 import getEditorContent from "@/utils/editor/get-editor-content"
 import renderQuills from "@/utils/editor/render-quills"
 import handleKeyDown from "@/utils/editor/key-down-handlers"
@@ -109,7 +108,6 @@ const page = () => {
     })
     socket.on("new:master", () => {
       setIsMaster(true)
-      console.log("became master")
     })
     socket.emit("request:latest")
     setTitle(editorData.title)
@@ -130,7 +128,6 @@ const page = () => {
       setOnlineUsers(data)
     })
     socket.on("recieve:page", ({ index }) => {
-      console.log("revieved new page")
       const newQuill = initializeQuill(parent, index)
       setQuills((prev: any) => [...prev, newQuill])
     })
@@ -140,7 +137,6 @@ const page = () => {
 
     return () => {
       if (socket) {
-        console.log("socket disconnecting...")
         socket.disconnect()
       }
     }
