@@ -1,15 +1,34 @@
 # Real-Time-Editor
+A collaborative document editing platform built with WebSockets, allowing multiple users to edit the same document simultaneously. It features live cursor positions and text selections for each user, with conflict-free editing and real time synchronization.
 
-Real Time Editor is a collaborative document editing platform inspired by Google Docs. It allows users to create and edit documents in real time, with the ability to invite collaborators and work together seamlessly. The app integrates Quill's rich text editor, leveraging its Delta format to represent changes in the document.
+![demo](https://i.postimg.cc/7P5vHvX3/realtime-editor-ezgif-com-video-to-gif-converter.gif)
 
-The key feature of Real Time Editor is its ability to handle conflicts between simultaneous edits. This is achieved using Operational Transformations (OT), which ensures that every user's document remains synchronized and converges correctly, even when multiple collaborators are making changes at the same time. This guarantees that all edits are integrated smoothly, resolving any conflicting changes automatically.
+# Motivation
+Collaboration is a core feature of modern productivity tools. I built this project to explore how WebSockets works and how an application like Google Docs functions behind the scenes.
 
-Real-time synchronization is achieved by Socket.IO and WebSockets, providing instant updates as users type. The app also supports live cursors, displaying each user's cursor position and text selection in real time, enhancing the collaborative experience by allowing users to see where others are working.
+## Usage
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/sbayce/Real-Time-Editor.git
+   ````
 
-To maintain performance, the app implements throttling when sending document changes over WebSockets, reducing the number of updates transmitted without compromising real-time responsiveness.
+3. Install dependencies:
+   ```bash
+   npm install
+   ````
+
+5. Create a .env file inside the server folder with the following:
+   ```bash
+   DATABASE_URL=your_postgresql_connection_string
+   ````
+
+7. Start the server:
+   ```bash
+   cd server
+   npm start
+   ````
 
 # Screenshots
-
 ![landing page](https://i.imgur.com/9DE16hT.png)
 ![home page](https://i.imgur.com/kgsJJu9.png)
 ![home page](https://i.imgur.com/ZghMuON.png)
